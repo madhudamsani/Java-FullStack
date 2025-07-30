@@ -1,0 +1,284 @@
+.payment-card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: none;
+  margin-bottom: 2rem;
+}
+
+.payment-card .card-header {
+  background-color: var(--bs-primary);
+  color: white;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border: none;
+}
+
+.saved-payment-methods {
+  margin-bottom: 2rem;
+}
+
+.payment-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-method-item {
+  padding: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-method-item:hover:not(.disabled) {
+  border-color: var(--bms-red);
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.payment-method-item.selected {
+  border-color: var(--bms-red);
+  background-color: #f8f9fa;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.payment-method-item.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.payment-method-icon {
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background-color: #f8f9fa;
+ border-radius: 8px;
+ margin-right: 0.75rem;
+}
+
+.payment-method-name {
+  font-weight: 500;
+  color: #212529;
+}
+
+.payment-method-info {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.add-new-card {
+  border-top: 1px solid #e9ecef;
+  padding-top: 1rem;
+}
+
+.new-card-form {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.booking-summary {
+  position: sticky;
+  top: 2rem;
+}
+
+.show-details h6 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.seat-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.seat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.price-item.total {
+  font-weight: 700;
+  font-size: 1.2rem;
+  border-top: 2px solid #dee2e6;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  color: var(--bms-red);
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.action-buttons button {
+  flex: 1;
+  min-width: 120px;
+}
+
+.action-buttons .back-button {
+  max-width: 120px;
+}
+
+.action-buttons .checkout-button {
+  flex: 2;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control.is-invalid {
+  background-image: none;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(248, 68, 100, 0.25);
+  border-color: var(--bms-red);
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+}
+
+.security-notice {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.security-notice i {
+  font-size: 1.25rem;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+/* BookMyShow specific styles */
+.booking-timer {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: 600;
+  color: #856404;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(248, 68, 100, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(248, 68, 100, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(248, 68, 100, 0);
+  }
+}
+
+.secure-payment-notice {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .payment-method-item {
+    padding: 0.75rem;
+  }
+  
+  .payment-method-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+  }
+
+  .booking-summary {
+    position: static;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .action-buttons .back-button,
+  .action-buttons .checkout-button {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .new-card-form {
+    padding: 1rem;
+  }
+
+  .form-control {
+    padding: 0.625rem;
+  }
+
+  .payment-method-name {
+    font-size: 0.9rem;
+  }
+  
+  .payment-method-info {
+    font-size: 0.8rem;
+  }
+}

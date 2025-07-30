@@ -1,0 +1,126 @@
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="mb-0">My Favorites</h2>
+      <p class="text-muted">Shows and events you've saved for later</p>
+    </div>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="row mb-4" *ngIf="successMessage || error">
+    <div class="col-12">
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" placeholder="Search favorites..." [(ngModel)]="searchQuery" (input)="applyFilters()">
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+      <select class="form-select" [(ngModel)]="categoryFilter" (change)="applyFilters()">
+        <option value="all">All Categories</option>
+        <option value="concert">Concerts</option>
+        <option value="theater">Theater</option>
+        <option value="movie">Movies</option>
+        <option value="sports">Sports</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="sortOrder" (change)="applyFilters()">
+        <option value="date-asc">Date (Soonest First)</option>
+        <option value="date-desc">Date (Latest First)</option>
+        <option value="title-asc">Title (A-Z)</option>
+        <option value="title-desc">Title (Z-A)</option>
+        <option value="price-asc">Price (Low to High)</option>
+        <option value="price-desc">Price (High to Low)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading your favorites...</p>
+  </div>
+
+  <!-- No Favorites Message -->
+  <div *ngIf="!isLoading && filteredFavorites.length === 0" class="text-center py-5">
+    <i class="bi bi-heart" style="font-size: 3rem;"></i>
+    <h4 class="mt-3">No Favorites Found</h4>
+    <p class="text-muted">You haven't added any shows to your favorites yet.</p>
+    <button class="btn btn-primary mt-2" routerLink="/shows">Browse Shows</button>
+  </div>
+
+  <!-- Favorites Grid -->
+  <div *ngIf="!isLoading && paginatedFavorites.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <div class="col" *ngFor="let show of paginatedFavorites">
+      <div class="card h-100 shadow-sm">
+        <div class="position-relative">
+          <img [src]="show.posterUrl || show.imageUrl || show.image || getImageUrl(null, show.type, show.genre || '', show.title)" class="card-img-top" alt="{{ show.title }}">
+          <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" (click)="show.id && removeFromFavorites(show.id)">
+            <i class="bi bi-heart-fill"></i>
+          </button>
+          <div *ngIf="isShowInPast(show.date)" class="position-absolute top-0 start-0 m-2 badge bg-secondary">Past Event</div>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{ show.title }}</h5>
+          <p class="card-text text-muted mb-1">
+            <i class="bi bi-geo-alt me-1"></i> {{ show.venue }}
+          </p>
+          <p class="card-text text-muted mb-2">
+            <i class="bi bi-calendar-event me-1"></i> {{ getFormattedDate(show.date) }}
+          </p>
+          <p class="card-text mb-3">
+            <span class="badge bg-primary me-2">{{ show.category }}</span>
+            <span class="fw-bold">${{ show.price?.toFixed(2) || '0.00' }}</span>
+          </p>
+          <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-primary" (click)="show.id && viewShowDetails(show.id)">
+              <i class="bi bi-info-circle me-1"></i> Details
+            </button>
+            <button class="btn btn-primary" [disabled]="isShowInPast(show.date)" (click)="show.id && bookShow(show.id)">
+              <i class="bi bi-ticket-perforated me-1"></i> Book
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && totalPages > 1" class="d-flex justify-content-center mt-4">
+    <nav aria-label="Favorites pagination">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" 
+            [class.active]="currentPage === i + 1">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(i + 1)">{{ i + 1 }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

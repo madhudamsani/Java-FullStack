@@ -1,0 +1,23 @@
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.setting-item {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.setting-description {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}

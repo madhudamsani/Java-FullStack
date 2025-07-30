@@ -1,0 +1,516 @@
+<div class="bms-container">
+  <!-- Loading Skeleton -->
+  <div *ngIf="loading" class="bms-loading-container">
+    <div class="bms-skeleton-wrapper">
+      <div class="bms-skeleton bms-skeleton-header"></div>
+      <div class="bms-skeleton-content">
+        <div class="bms-skeleton bms-skeleton-title"></div>
+        <div class="bms-skeleton bms-skeleton-meta"></div>
+        <div class="bms-skeleton bms-skeleton-text"></div>
+        <div class="bms-skeleton bms-skeleton-text"></div>
+        <div class="bms-skeleton bms-skeleton-text"></div>
+      </div>
+      <div class="bms-skeleton-sidebar">
+        <div class="bms-skeleton bms-skeleton-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="bms-error-container">
+    <div class="bms-error-message">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ error }}</span>
+      <button class="bms-retry-button" (click)="retryLoading()">
+        <i class="bi bi-arrow-clockwise"></i>Retry
+      </button>
+    </div>
+  </div>
+
+  <!-- Show Details -->
+  <div *ngIf="show && !loading" class="bms-show-details">
+    <!-- Movie/Show Banner -->
+    <div class="bms-banner" [style.background-image]="'url(' + (show.posterUrl || show.imageUrl || show.image || getImageUrl(null, show.type, show.genre || '', show.title)) + ')'">
+      <div class="bms-banner-overlay"></div>
+      <div class="bms-banner-content">
+        <div class="bms-container">
+          <div class="bms-banner-info">
+            <div class="bms-poster-container">
+              <img [src]="show.posterUrl || show.imageUrl || show.image || getImageUrl(null, show.type, show.genre || '', show.title)" [alt]="show.title" class="bms-poster">
+              <div class="bms-play-trailer" 
+                   *ngIf="shouldShowTrailer()" 
+                   (click)="playTrailer()"
+                   [class.disabled]="!hasTrailerUrl()">
+                <i class="bi bi-play-circle-fill"></i>
+                <span>{{ hasTrailerUrl() ? 'Watch Trailer' : 'Trailer Not Available' }}</span>
+              </div>
+            </div>
+            <div class="bms-banner-details">
+              <h1 class="bms-title">{{ show.title }}</h1>
+              
+              <div class="bms-rating-container" *ngIf="averageRating > 0">
+                <div class="bms-rating">
+                  <i class="bi bi-star-fill"></i>
+                  <span>{{ averageRating.toFixed(1) }}/5</span>
+                </div>
+                <div class="bms-rating-count">{{ reviews.length }} ratings</div>
+              </div>
+              
+              <div class="bms-badge-container">
+                <span class="bms-badge" 
+                      [ngClass]="{
+                        'bms-badge-movie': show.type === 'Movie',
+                        'bms-badge-theater': show.type === 'Theatrical',
+                        'bms-badge-concert': show.type === 'Concert',
+                        'bms-badge-default': show.type !== 'Movie' && show.type !== 'Theatrical' && show.type !== 'Concert'
+                      }">
+                  {{ show.type }}
+                </span>
+                <span class="bms-badge bms-badge-duration" *ngIf="show.duration">{{ show.duration }} min</span>
+                <span class="bms-badge bms-badge-genre" *ngIf="show.genre">{{ show.genre }}</span>
+              </div>
+              
+              <div class="bms-release-date">
+                <i class="bi bi-calendar3"></i>
+                <span>{{ getShowDate(show) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bms-container">
+      <!-- Booking Navigation -->
+      <div class="bms-booking-nav">
+        <div class="bms-nav-item active" (click)="scrollToSection('booking')">
+          <i class="bi bi-ticket-perforated"></i>
+          <span>Book Tickets</span>
+        </div>
+        <div class="bms-nav-item" (click)="scrollToSection('about')">
+          <i class="bi bi-info-circle"></i>
+          <span>About</span>
+        </div>
+        <div class="bms-nav-item" (click)="scrollToSection('reviews')">
+          <i class="bi bi-star"></i>
+          <span>Reviews</span>
+        </div>
+      </div>
+
+      <div class="bms-content-wrapper">
+        <!-- Main Content -->
+        <div class="bms-main-content">
+          <!-- Show Booking Section -->
+          <div id="booking" class="bms-booking-section">
+            <div class="bms-section-header">
+              <h2 class="bms-section-title">Book Tickets</h2>
+            </div>
+            
+            <!-- Show Availability Summary -->
+            <div class="bms-availability-summary">
+              <div class="bms-availability-item">
+                <i class="bi bi-calendar-event"></i>
+                <span>Release Date :  {{ getShowDate(show) }}</span>
+              </div>
+              <div class="bms-availability-item">
+                <i class="bi bi-geo-alt"></i>
+                <span>{{ getShowVenue(show) }}</span>
+              </div>
+
+              <div class="bms-availability-item">
+                <i class="bi bi-currency-rupee"></i>
+                <span>Tickets from :  ₹{{ (show.price || 0).toFixed(0) }}</span>
+              </div>
+            </div>
+
+            <!-- Book Now Button -->
+            <div class="bms-book-now-container">
+              <button class="bms-book-now-btn" 
+                      (click)="proceedToBooking()" 
+                      [disabled]="!canBook()">
+                <i class="bi bi-ticket-perforated"></i>
+                <span>{{ canBook() ? 'Book Tickets' : getBookButtonText() }}</span>
+              </button>
+              <p class="bms-booking-note">
+                <i class="bi bi-info-circle"></i>
+                <span>Select your preferred date, time and seats on the next page</span>
+              </p>
+              <div *ngIf="!isLoggedIn" class="bms-login-prompt mt-3">
+                <i class="bi bi-person-lock"></i>
+                <span>Please <a routerLink="/login" [queryParams]="{returnUrl: '/shows/' + show.id}">log in</a> to book tickets</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- About the Show -->
+          <div id="about" class="bms-about-section">
+            <h2 class="bms-section-title">About</h2>
+            <p class="bms-description">{{ show.description || 'No description available for this show.' }}</p>
+            
+            <!-- Show Information -->
+            <div class="bms-info-grid">
+              <div class="bms-info-item">
+                <div class="bms-info-label">Genre</div>
+                <div class="bms-info-value">{{ show.genre || 'Not specified' }}</div>
+              </div>
+              <div class="bms-info-item">
+                <div class="bms-info-label">Duration</div>
+                <div class="bms-info-value">{{ show.duration }} min</div>
+              </div>
+              <div class="bms-info-item">
+                <div class="bms-info-label">Language</div>
+                <div class="bms-info-value">{{ show.language || 'Not specified' }}</div>
+              </div>
+              
+              <div class="bms-info-item">
+                <div class="bms-info-label">Rating</div>
+                <div class="bms-info-value">{{ averageRating.toFixed(1) }}/5 ({{ reviews.length }} reviews)</div>
+              </div>
+              
+            </div>
+          </div>
+          
+          <!-- Reviews Section -->
+          <div id="reviews" class="bms-reviews-section">
+            <div class="bms-reviews-header">
+              <div class="bms-reviews-title-container">
+                <h2 class="bms-reviews-title">
+                  <i class="bi bi-star-fill"></i>
+                  <span>Audience Reviews</span>
+                </h2>
+                <div class="bms-reviews-title-underline"></div>
+              </div>
+              
+              <button class="bms-write-review-btn" *ngIf="isLoggedIn" (click)="openReviewModal()">
+                <span class="btn-content">
+                  <i class="bi bi-pencil-square" style="color: black !important;"></i>
+                  <span style="color: black !important;">Write a Review</span>
+                </span>
+                <span class="btn-shine"></span>
+              </button>
+            </div>
+            
+            <!-- Reviews Summary Card -->
+            <div class="bms-reviews-summary-card" *ngIf="reviews.length > 0">
+              <div class="bms-reviews-summary-content">
+                <div class="bms-reviews-rating-container">
+                  <div class="bms-rating-circle">
+                    <div class="bms-rating-number">{{ averageRating.toFixed(1) }}</div>
+                    <div class="bms-rating-max">/5</div>
+                  </div>
+                  
+                  <div class="bms-rating-details">
+                    <div class="bms-rating-stars-container">
+                      <i *ngFor="let star of getStarsArray(averageRating); let i = index" 
+                         class="bi" 
+                         [ngClass]="{
+                           'bi-star-fill': star === 1,
+                           'bi-star-half': star === 0.5,
+                           'bi-star': star === 0
+                         }"
+                         [style.animation-delay]="i * 0.1 + 's'"></i>
+                    </div>
+                    <div class="bms-rating-count">
+                      <span class="bms-rating-count-number">{{ reviews.length }}</span>
+                      <span class="bms-rating-count-text">{{ reviews.length === 1 ? 'Review' : 'Reviews' }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bms-reviews-cta" *ngIf="isLoggedIn">
+                  <p>Have you seen this show?</p>
+                  <button class="bms-rate-now-btn" (click)="openReviewModal()">
+                    <i class="bi bi-star"></i>
+                    <span>Rate Now</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Review List -->
+            <div class="bms-reviews-list-container" *ngIf="reviews.length > 0; else noReviews">
+              <div class="bms-reviews-list">
+                <div *ngFor="let review of reviews; let i = index" class="bms-review-card" 
+                     [style.animation-delay]="i * 0.15 + 's'">
+                  <div class="bms-review-card-inner">
+                    <div class="bms-review-header">
+                      <div class="bms-review-user">
+                        <div class="bms-user-avatar">
+                          {{ getInitials(review.userName || 'Anonymous') }}
+                        </div>
+                        <div class="bms-user-info">
+                          <div class="bms-user-name">{{ review.userName || 'Anonymous User' }}</div>
+                          <div class="bms-review-date">
+                            <i class="bi bi-calendar3"></i>
+                            <span>{{ formatDate(review.createdAt) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="bms-review-rating">
+                        <div class="bms-stars">
+                          <i *ngFor="let star of getStarsArray(review.rating); let s = index" 
+                             class="bi" 
+                             [ngClass]="{
+                               'bi-star-fill': star === 1,
+                               'bi-star-half': star === 0.5,
+                               'bi-star': star === 0
+                             }"
+                             [style.animation-delay]="(i * 0.15) + (s * 0.05) + 's'"></i>
+                        </div>
+                        <div class="bms-rating-value">{{ review.rating.toFixed(1) }}</div>
+                      </div>
+                    </div>
+                    
+                    <div class="bms-review-content">
+                      <div class="bms-review-text-container">
+                        <p class="bms-review-text">{{ review.review || review.comment || 'No review provided.' }}</p>
+                      </div>
+                      
+                      <div class="bms-review-actions">
+                        <button class="bms-review-action-btn bms-review-helpful-btn">
+                          <i class="bi bi-hand-thumbs-up"></i>
+                          <span>Helpful</span>
+                        </button>
+                        <button class="bms-review-action-btn bms-review-share-btn">
+                          <i class="bi bi-share"></i>
+                          <span>Share</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bms-reviews-pagination" *ngIf="reviews.length > 5">
+                <button class="bms-pagination-btn bms-pagination-prev">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="bms-pagination-pages">
+                  <span class="bms-pagination-page active">1</span>
+                  <span class="bms-pagination-page">2</span>
+                  <span class="bms-pagination-page">3</span>
+                </div>
+                <button class="bms-pagination-btn bms-pagination-next">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- No Reviews Template -->
+            <ng-template #noReviews>
+              <div class="bms-no-reviews">
+                <div class="bms-no-reviews-icon">
+                  <i class="bi bi-star"></i>
+                </div>
+                <h3 class="bms-no-reviews-title">No Reviews Yet</h3>
+                <p class="bms-no-reviews-text">Be the first to share your thoughts about this show!</p>
+                
+                <div class="bms-no-reviews-actions">
+                  <button class="bms-write-first-review-btn" *ngIf="isLoggedIn" (click)="openReviewModal()">
+                    <i class="bi bi-pencil-square" style="color: black !important;"></i>
+                    <span style="color: black !important;">Write First Review</span>
+                  </button>
+                  
+                  <div *ngIf="!isLoggedIn" class="bms-login-prompt">
+                    <i class="bi bi-person-lock"></i>
+                    <span>Please <a routerLink="/login" [queryParams]="{returnUrl: '/shows/' + show.id}">log in</a> to write a review</span>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+          
+          <!-- Similar Shows Section -->
+          <div *ngIf="similarShows && similarShows.length > 0" class="bms-similar-shows">
+            <h2 class="bms-section-title">You May Also Like</h2>
+            <div class="bms-similar-shows-grid">
+              <div *ngFor="let similarShow of similarShows" class="bms-similar-show-card">
+                <div class="bms-similar-show-poster">
+                  <img [src]="similarShow.posterUrl || similarShow.imageUrl || similarShow.image || getImageUrl(null, similarShow.type, similarShow.genre || '', similarShow.title)" 
+                       [alt]="similarShow.title">
+                  <div class="bms-similar-show-overlay">
+                    <a [routerLink]="['/shows', similarShow.id]" class="bms-similar-book-btn">Book Now</a>
+                  </div>
+                </div>
+                <div class="bms-similar-show-info">
+                  <h3 class="bms-similar-show-title">{{ similarShow.title }}</h3>
+                  <div class="bms-similar-show-meta">
+                    <span class="bms-similar-show-type">{{ similarShow.type }}</span>
+                    <span class="bms-similar-show-price">₹{{ (similarShow.price || 0).toFixed(0) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Share Section -->
+          <div class="bms-share-section">
+            <h2 class="bms-section-title">Share with Friends</h2>
+            <div class="bms-share-buttons">
+              <button class="bms-share-btn bms-share-facebook" (click)="shareShow('facebook')">
+                <i class="bi bi-facebook"></i>
+              </button>
+              <button class="bms-share-btn bms-share-twitter" (click)="shareShow('twitter')">
+                <i class="bi bi-twitter"></i>
+              </button>
+              <button class="bms-share-btn bms-share-whatsapp" (click)="shareShow('whatsapp')">
+                <i class="bi bi-whatsapp"></i>
+              </button>
+              <button class="bms-share-btn bms-share-email" (click)="shareShow('email')">
+                <i class="bi bi-envelope"></i>
+              </button>
+              <button class="bms-share-btn bms-share-link" (click)="copyLink()">
+                <i class="bi bi-link-45deg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="linkCopiedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header" style="background-color: var(--bms-dark-blue); color: white;">
+      <i class="bi bi-check-circle-fill me-2" style="color: var(--bms-green);"></i>
+      <strong class="me-auto">Success</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" style="background-color: white; color: var(--bms-text-dark);">
+      Link copied to clipboard!
+    </div>
+  </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bms-review-modal">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--bms-dark-blue), var(--bms-red)); color: white; border: none;">
+        <h5 class="modal-title" id="reviewModalLabel">
+          <i class="bi bi-star-fill me-2"></i>Share Your Experience
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form [formGroup]="reviewForm">
+          <div class="mb-4 bms-rating-selector">
+            <label class="form-label fw-bold d-flex align-items-center" style="color: #000 !important;">
+              <i class="bi bi-stars me-2 text-warning"></i>
+              Rate This Show
+            </label>
+            <div class="d-flex bms-star-rating justify-content-center">
+              <div *ngFor="let star of [1,2,3,4,5]" 
+                   class="mx-2 bms-star-container" 
+                   (click)="setRating(star)">
+                <i class="bi" 
+                   [ngClass]="star <= (reviewForm.get('rating')?.value || 0) ? 'bi-star-fill' : 'bi-star'"
+                   [style.opacity]="reviewForm.get('rating')?.value ? '1' : '0.7'"></i>
+              </div>
+            </div>
+            <div *ngIf="reviewForm.get('rating')?.invalid && reviewForm.get('rating')?.touched" 
+                 class="text-danger small mt-2 bms-validation-message">
+              <i class="bi bi-exclamation-circle me-1"></i>
+              Please select a rating by clicking on a star
+            </div>
+            <div *ngIf="reviewForm.get('rating')?.value" class="text-success small mt-2 bms-rating-confirmation">
+              <i class="bi bi-check-circle me-1"></i>
+              You rated this show {{ reviewForm.get('rating')?.value }} out of 5 stars
+            </div>
+          </div>
+          
+          <div class="mb-4 bms-review-text-container">
+            <label for="comment" class="form-label fw-bold d-flex align-items-center" style="color: #000 !important;">
+              <i class="bi bi-chat-quote me-2 text-primary"></i>
+              Your Review (Optional)
+            </label>
+            <textarea 
+              class="form-control bms-review-textarea" 
+              id="comment" 
+              formControlName="comment"
+              rows="4"
+              placeholder="Tell others what you thought about this show. What did you like or dislike? Would you recommend it to others?"></textarea>
+            <div *ngIf="reviewForm.get('comment')?.invalid && reviewForm.get('comment')?.touched" 
+                 class="text-danger small mt-2 bms-validation-message">
+              <i class="bi bi-exclamation-circle me-1"></i>
+              If provided, your review must be at least 10 characters long.
+            </div>
+            <div class="bms-character-count text-muted" 
+                 [class.text-danger]="reviewForm.get('comment')?.value?.length > 490">
+              {{ reviewForm.get('comment')?.value?.length || 0 }}/500
+            </div>
+          </div>
+          
+          
+          
+        </form>
+      </div>
+      <div class="modal-footer bms-review-footer">
+        <button type="button" class="btn btn-outline-secondary bms-cancel-btn" data-bs-dismiss="modal" style="color: #555 !important;">
+          <i class="bi bi-x-circle me-1" style="color: #555 !important;"></i>Cancel
+        </button>
+        
+        <div class="bms-action-buttons">
+          <button type="button" class="btn btn-success me-2 bms-save-btn" 
+                  [disabled]="reviewForm.invalid || isSubmittingReview" 
+                  (click)="saveReview()" style="color: white !important;">
+            <i class="bi bi-save me-1" style="color: white !important;"></i>
+            <span *ngIf="isSubmittingReview" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <span style="color: rgb(11, 1, 1) !important;">Save & Close</span>
+          </button>
+          <button type="button" class="btn bms-submit-btn" 
+                  [disabled]="reviewForm.invalid || isSubmittingReview" 
+                  (click)="submitReview()" style="color: white !important;">
+            <i class="bi bi-check2-circle me-1" style="color: white !important;"></i>
+            <span *ngIf="isSubmittingReview" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <span style="color: white !important;">Submit & Continue</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trailer Modal -->
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-labelledby="trailerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="trailerModalLabel">{{ show?.title }} - Trailer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="closeTrailer()"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="trailer-container" *ngIf="currentTrailerUrl">
+          <iframe 
+            [src]="currentTrailerUrl" 
+            frameborder="0" 
+            allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            class="trailer-iframe">
+          </iframe>
+        </div>
+        <div class="trailer-error" *ngIf="!currentTrailerUrl">
+          <i class="bi bi-exclamation-triangle"></i>
+          <p>Trailer is not available for this content.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Link Copied Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="linkCopiedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <i class="bi bi-check-circle-fill me-2 text-success"></i>
+      <strong class="me-auto">Success</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Link copied to clipboard!
+    </div>
+  </div>
+</div>

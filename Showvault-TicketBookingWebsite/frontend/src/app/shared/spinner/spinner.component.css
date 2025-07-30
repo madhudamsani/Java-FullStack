@@ -1,0 +1,31 @@
+.spinner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-wrapper.sm .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+.spinner-wrapper.sm .spinner-message {
+  font-size: 0.875rem;
+}
+
+.spinner-wrapper.md .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  border-width: 0.25em;
+}
+
+.spinner-wrapper.lg .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+.spinner-message {
+  color: inherit;
+}

@@ -1,0 +1,240 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow border-0 rounded-3">
+        <div class="card-body p-4 p-md-5">
+          <div class="text-center mb-4">
+            <i class="bi bi-person-plus-fill text-primary fs-1 mb-3"></i>
+            <h2 class="fw-bold">Create Your Account</h2>
+            <p class="text-muted">Join ShowVault to book tickets for your favorite shows</p>
+          </div>
+          
+          <div *ngIf="registrationError" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {{ registrationError }}
+            <button type="button" class="btn-close" (click)="registrationError = ''"></button>
+          </div>
+          
+          <div *ngIf="registrationSuccess" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            {{ registrationSuccess }}
+            <button type="button" class="btn-close" (click)="registrationSuccess = ''"></button>
+          </div>
+          
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="needs-validation">
+            <div class="row g-3">
+              <!-- Personal Information -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="firstName" 
+                    formControlName="firstName" 
+                    placeholder="John"
+                    [ngClass]="{'is-invalid': registerForm.get('firstName')?.invalid && (registerForm.get('firstName')?.dirty || registerForm.get('firstName')?.touched)}"
+                  >
+                  <label for="firstName">First Name</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('firstName')?.errors?.['required']">
+                    First name is required
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('firstName')?.errors?.['minlength']">
+                    First name must be at least 2 characters
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="lastName" 
+                    formControlName="lastName" 
+                    placeholder="Doe"
+                    [ngClass]="{'is-invalid': registerForm.get('lastName')?.invalid && (registerForm.get('lastName')?.dirty || registerForm.get('lastName')?.touched)}"
+                  >
+                  <label for="lastName">Last Name</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('lastName')?.errors?.['required']">
+                    Last name is required
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('lastName')?.errors?.['minlength']">
+                    Last name must be at least 2 characters
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Account Information -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="username" 
+                    formControlName="username" 
+                    placeholder="johndoe"
+                    [ngClass]="{'is-invalid': registerForm.get('username')?.invalid && (registerForm.get('username')?.dirty || registerForm.get('username')?.touched)}"
+                  >
+                  <label for="username">Username</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('username')?.errors?.['required']">
+                    Username is required
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('username')?.errors?.['minlength']">
+                    Username must be at least 3 characters
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('username')?.errors?.['pattern']">
+                    Username can only contain letters, numbers, and underscores
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input 
+                    type="email" 
+                    class="form-control" 
+                    id="email" 
+                    formControlName="email" 
+                    placeholder="name@example.com"
+                    [ngClass]="{'is-invalid': registerForm.get('email')?.invalid && (registerForm.get('email')?.dirty || registerForm.get('email')?.touched)}"
+                  >
+                  <label for="email">Email Address</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('email')?.errors?.['required']">
+                    Email address is required
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('email')?.errors?.['email']">
+                    Please enter a valid email address
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-floating mb-3 password-container">
+                  <input 
+                    [type]="showPassword ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="password" 
+                    formControlName="password"
+                    placeholder="Password"
+                    [ngClass]="{'is-invalid': registerForm.get('password')?.invalid && (registerForm.get('password')?.dirty || registerForm.get('password')?.touched)}"
+                  >
+                  <label for="password">Password</label>
+                  <span class="password-toggle" (click)="togglePasswordVisibility()">
+                    <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </span>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('password')?.errors?.['required']">
+                    Password is required
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('password')?.errors?.['minlength']">
+                    Password must be at least 8 characters
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('password')?.errors?.['pattern']">
+                    Password must include at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&amp;#)
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-floating mb-3 password-container">
+                  <input 
+                    [type]="showPassword ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="confirmPassword" 
+                    formControlName="confirmPassword"
+                    placeholder="Confirm Password"
+                    [ngClass]="{'is-invalid': (registerForm.get('confirmPassword')?.invalid || registerForm.errors?.['mismatch']) && (registerForm.get('confirmPassword')?.dirty || registerForm.get('confirmPassword')?.touched)}"
+                  >
+                  <label for="confirmPassword">Confirm Password</label>
+                  <span class="password-toggle" (click)="togglePasswordVisibility()">
+                    <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </span>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">
+                    Please confirm your password
+                  </div>
+                  <div class="invalid-feedback" *ngIf="registerForm.errors?.['mismatch']">
+                    Passwords do not match
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Contact Information -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input 
+                    type="tel" 
+                    class="form-control" 
+                    id="phoneNumber" 
+                    formControlName="phoneNumber" 
+                    placeholder="+1234567890"
+                    [ngClass]="{'is-invalid': registerForm.get('phoneNumber')?.invalid && (registerForm.get('phoneNumber')?.dirty || registerForm.get('phoneNumber')?.touched)}"
+                  >
+                  <label for="phoneNumber">Phone Number (Optional)</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('phoneNumber')?.errors?.['pattern']">
+                    Please enter a valid phone number
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Role Selection -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <select 
+                    class="form-select" 
+                    id="role" 
+                    formControlName="role"
+                    [ngClass]="{'is-invalid': registerForm.get('role')?.invalid && (registerForm.get('role')?.dirty || registerForm.get('role')?.touched)}"
+                  >
+                    <option value="ROLE_USER">User (Book tickets)</option>
+                    <option value="ROLE_ORGANIZER">Organizer (Create shows)</option>
+                    <option value="ROLE_ADMIN">Administrator</option>
+                  </select>
+                  <label for="role">Account Type</label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('role')?.errors?.['required']">
+                    Please select an account type
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Terms and Conditions -->
+              <div class="col-12 mb-3">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="termsAccepted" 
+                    formControlName="termsAccepted"
+                    [ngClass]="{'is-invalid': registerForm.get('termsAccepted')?.invalid && (registerForm.get('termsAccepted')?.dirty || registerForm.get('termsAccepted')?.touched)}"
+                  >
+                  <label class="form-check-label" for="termsAccepted">
+                    I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
+                  </label>
+                  <div class="invalid-feedback" *ngIf="registerForm.get('termsAccepted')?.errors?.['required']">
+                    You must accept the terms and conditions
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Submit Button -->
+              <div class="col-12">
+                <div class="d-grid">
+                  <button 
+                    type="submit" 
+                    class="btn btn-primary btn-lg" 
+                    [disabled]="registerForm.invalid || isLoading"
+                  >
+                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Create Account
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <div class="text-center mt-4">
+            <p class="mb-0">Already have an account? <a routerLink="/login" class="text-primary fw-bold">Sign in</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

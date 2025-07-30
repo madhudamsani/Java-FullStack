@@ -1,0 +1,50 @@
+.card {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  font-weight: 500;
+}
+
+.progress {
+  height: 20px;
+  margin-bottom: 0;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.35em 0.65em;
+}
+
+/* Chart styling */
+.chart-container {
+  position: relative;
+  margin: auto;
+}
+
+.placeholder-chart {
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Print styles */
+@media print {
+  .btn-group, .nav-tabs {
+    display: none !important;
+  }
+  
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .card-header {
+    background-color: #f8f9fa !important;
+    color: #000 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+  }
+  
+  .tab-content {
+    display: block !important;
+  }
+}

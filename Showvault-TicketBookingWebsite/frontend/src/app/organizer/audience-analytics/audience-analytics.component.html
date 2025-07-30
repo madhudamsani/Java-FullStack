@@ -1,0 +1,315 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-people-fill me-2 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0">Audience Analytics</h2>
+      </div>
+      <p class="text-muted mb-0">Analyze your audience demographics and gain insights to improve marketing strategies</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <button class="btn btn-outline-secondary" (click)="loadDemographics()" [disabled]="isLoading">
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="isLoading"></i>
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-download me-1"></i> Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><button class="dropdown-item" (click)="exportReport('pdf')"><i class="bi bi-file-pdf me-2"></i>PDF</button></li>
+          <li><button class="dropdown-item" (click)="exportReport('csv')"><i class="bi bi-file-spreadsheet me-2"></i>CSV</button></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" (click)="printReport()"><i class="bi bi-printer me-2"></i>Print</button></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" (click)="success = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">Loading audience data...</p>
+            </div>
+          </div>
+
+          <!-- Report Filters -->
+          <div class="card mb-4 slide-in">
+            <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Analytics Filters</h6>
+              <button type="button" class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </div>
+            <div class="collapse show" id="filterCollapse">
+              <div class="card-body">
+                <form [formGroup]="filterForm">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="showId" class="form-label">Show</label>
+                      <select class="form-select" id="showId" formControlName="showId" (change)="loadDemographics()">
+                        <option value="all">All Shows</option>
+                        <option *ngFor="let show of shows" [value]="show.id">{{ show.title }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Demographics Report -->
+          <div *ngIf="!isLoading && demographics" class="demographics-report">
+            <div class="row">
+              <!-- Age Distribution -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100 slide-in card-animation-1">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Age Distribution</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="demographic-item" *ngFor="let ageGroup of demographics.ageGroups | keyvalue; let i = index"
+                         [ngClass]="{'fade-in': true}" 
+                         [style.animation-delay]="i * 0.1 + 's'">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span>{{ ageGroup.key }}</span>
+                        <span class="badge bg-primary">{{ ageGroup.value }}%</span>
+                      </div>
+                      <div class="progress mb-3 progress-animate">
+                        <div 
+                          class="progress-bar" 
+                          [ngClass]="getProgressBarClass(ageGroup.value)"
+                          role="progressbar" 
+                          [style.width.%]="ageGroup.value" 
+                          [attr.aria-valuenow]="ageGroup.value" 
+                          aria-valuemin="0" 
+                          aria-valuemax="100">
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4 insight-box bounce-in">
+                      <h6 class="text-primary">Key Insights</h6>
+                      <ul class="insights-list">
+                        <li>
+                          <i class="bi bi-star-fill text-warning me-2"></i>
+                          <span class="insight-label">Largest Age Group:</span>
+                          <span class="insight-value">
+                            {{ (demographics.ageGroups | keyvalue)[0].key }}
+                            ({{ (demographics.ageGroups | keyvalue)[0].value }}%)
+                          </span>
+                        </li>
+                        <li>
+                          <i class="bi bi-person me-2 text-info"></i>
+                          <span class="insight-label">Youth Attendance:</span>
+                          <span class="insight-value">
+                            {{ getAgeGroupPercentage('18-24') + getAgeGroupPercentage('25-34') }}%
+                          </span>
+                        </li>
+                        <li>
+                          <i class="bi bi-person-check me-2 text-success"></i>
+                          <span class="insight-label">Senior Attendance:</span>
+                          <span class="insight-value">
+                            {{ getAgeGroupPercentage('55+') }}%
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gender Distribution -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100 slide-in card-animation-2">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Gender Distribution</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="demographic-item" *ngFor="let gender of demographics.genderDistribution | keyvalue; let i = index"
+                         [ngClass]="{'fade-in': true}" 
+                         [style.animation-delay]="i * 0.1 + 's'">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span>{{ gender.key | titlecase }}</span>
+                        <span class="badge" [ngClass]="gender.key === 'male' ? 'bg-info' : gender.key === 'female' ? 'bg-danger' : 'bg-success'">
+                          {{ gender.value }}%
+                        </span>
+                      </div>
+                      <div class="progress mb-3 progress-animate">
+                        <div 
+                          class="progress-bar" 
+                          [ngClass]="gender.key === 'male' ? 'bg-info' : gender.key === 'female' ? 'bg-danger' : 'bg-success'"
+                          role="progressbar" 
+                          [style.width.%]="gender.value" 
+                          [attr.aria-valuenow]="gender.value" 
+                          aria-valuemin="0" 
+                          aria-valuemax="100">
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="gender-pie-chart mt-4 bounce-in">
+                      <!-- Placeholder for a pie chart - in a real app, this would use a charting library -->
+                      <div class="pie-chart-placeholder">
+                        <div class="pie-segment male" [style.transform]="'rotate(0deg) skew(' + (getGenderPercentage('male') * 3.6) + 'deg)'"></div>
+                        <div class="pie-segment female" [style.transform]="'rotate(' + (getGenderPercentage('male') * 3.6) + 'deg) skew(' + (getGenderPercentage('female') * 3.6) + 'deg)'"></div>
+                        <div class="pie-segment other" [style.transform]="'rotate(' + ((getGenderPercentage('male') + getGenderPercentage('female')) * 3.6) + 'deg) skew(' + (getGenderPercentage('other') * 3.6) + 'deg)'"></div>
+                      </div>
+                      <div class="pie-legend">
+                        <div class="legend-item">
+                          <span class="legend-color male"></span>
+                          <span>Male ({{ getGenderPercentage('male') }}%)</span>
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color female"></span>
+                          <span>Female ({{ getGenderPercentage('female') }}%)</span>
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color other"></span>
+                          <span>Other ({{ getGenderPercentage('other') }}%)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Location Distribution -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100 slide-in card-animation-3">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Location Distribution</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="demographic-item" *ngFor="let location of demographics.locationDistribution | keyvalue; let i = index"
+                         [ngClass]="{'fade-in': true}" 
+                         [style.animation-delay]="i * 0.1 + 's'">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span>
+                          <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+                          {{ location.key }}
+                        </span>
+                        <span class="badge bg-primary">{{ location.value }}%</span>
+                      </div>
+                      <div class="progress mb-3 progress-animate">
+                        <div 
+                          class="progress-bar" 
+                          [ngClass]="getProgressBarClass(location.value)"
+                          role="progressbar" 
+                          [style.width.%]="location.value" 
+                          [attr.aria-valuenow]="location.value" 
+                          aria-valuemin="0" 
+                          aria-valuemax="100">
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4 insight-box bounce-in">
+                      <h6 class="text-primary">Key Insights</h6>
+                      <ul class="insights-list">
+                        <li>
+                          <i class="bi bi-pin-map-fill text-danger me-2"></i>
+                          <span class="insight-label">Top Location:</span>
+                          <span class="insight-value">
+                            {{ (demographics.locationDistribution | keyvalue)[0].key }}
+                            ({{ (demographics.locationDistribution | keyvalue)[0].value }}%)
+                          </span>
+                        </li>
+                        <li>
+                          <i class="bi bi-house me-2 text-success"></i>
+                          <span class="insight-label">Local Attendance:</span>
+                          <span class="insight-value">
+                            {{ getLocationPercentage('New York') }}%
+                          </span>
+                        </li>
+                        <li>
+                          <i class="bi bi-globe me-2 text-info"></i>
+                          <span class="insight-label">Out of State:</span>
+                          <span class="insight-value">
+                            {{ 100 - getLocationPercentage('New York') - getLocationPercentage('New Jersey') }}%
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Marketing Recommendations -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="card shadow-sm slide-in">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Marketing Recommendations</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="recommendation-card bounce-in card-animation-1">
+                          <div class="recommendation-icon">
+                            <i class="bi bi-people"></i>
+                          </div>
+                          <h5>Target Audience</h5>
+                          <p>Focus marketing efforts on {{ (demographics.ageGroups | keyvalue)[0].key }} age group, which represents your largest audience segment at {{ (demographics.ageGroups | keyvalue)[0].value }}%.</p>
+                          <div class="recommendation-action">
+                            <a href="#" class="btn btn-sm btn-outline-primary">Learn More</a>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="recommendation-card bounce-in card-animation-2">
+                          <div class="recommendation-icon">
+                            <i class="bi bi-geo-alt"></i>
+                          </div>
+                          <h5>Geographic Focus</h5>
+                          <p>Concentrate promotions in {{ (demographics.locationDistribution | keyvalue)[0].key }} where {{ (demographics.locationDistribution | keyvalue)[0].value }}% of your audience is located.</p>
+                          <div class="recommendation-action">
+                            <a href="#" class="btn btn-sm btn-outline-primary">Learn More</a>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="recommendation-card bounce-in card-animation-3">
+                          <div class="recommendation-icon">
+                            <i class="bi bi-graph-up"></i>
+                          </div>
+                          <h5>Growth Opportunity</h5>
+                          <p>Consider targeting the {{ demographics && demographics.ageGroups && (demographics.ageGroups | keyvalue)[4] && (demographics.ageGroups | keyvalue)[4].key || '55+' }} demographic, which currently represents only {{ demographics && demographics.ageGroups && (demographics.ageGroups | keyvalue)[4] && (demographics.ageGroups | keyvalue)[4].value || getAgeGroupPercentage('55+') }}% of your audience.</p>
+                          <div class="recommendation-action">
+                            <a href="#" class="btn btn-sm btn-outline-primary">Learn More</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,140 @@
+<div class="container my-5">
+  <!-- Success notification -->
+  <div class="alert alert-success booking-success-alert" *ngIf="bookingResponse?.booking && !error">
+    <div class="d-flex align-items-center">
+      <div class="success-icon me-3">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <div>
+        <h5 class="alert-heading mb-1">Booking Successful!</h5>
+        <p class="mb-0">Your booking for <strong>{{ bookingSummary?.show?.title }}</strong> has been confirmed. Booking number: <strong>{{ bookingResponse?.booking?.bookingNumber }}</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error message -->
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="bi bi-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <!-- Booking confirmation details -->
+  <div class="card shadow" *ngIf="bookingResponse?.booking">
+    <div class="card-header text-white" style="background-color: var(--bms-red);">
+      <h4 class="mb-0">
+        <i class="bi bi-check-circle me-2"></i>Booking Confirmed!
+      </h4>
+    </div>
+    <div class="card-body">
+      <!-- Booking summary section -->
+      <div class="row">
+        <div class="col-md-8">
+          <div class="d-flex mb-3">
+            <img [src]="bookingSummary?.show?.image || bookingSummary?.show?.posterUrl || bookingSummary?.show?.imageUrl || getImageUrl(null, bookingSummary?.show?.type || 'Show', '', bookingSummary?.show?.title || '')" 
+                 [alt]="bookingSummary?.show?.title" 
+                 class="me-3" 
+                 style="width: 100px; height: auto; object-fit: cover; border-radius: 4px;">
+            <div>
+              <h5>{{ bookingSummary?.show?.title || 'N/A' }}</h5>
+              <p class="text-muted mb-0">{{ bookingSummary?.show?.type || 'Show' }}</p>
+            </div>
+          </div>
+          <h5>Booking Details</h5>
+          <p><strong>Booking Number:</strong> {{ bookingResponse?.booking?.bookingNumber || 'N/A' }}</p>
+          <p><strong>Status:</strong> 
+            <ng-container *ngIf="bookingResponse?.booking?.status as status">
+              <span [class]="'badge ' + getStatusColor(status)">
+                {{ getStatusDisplayName(status) }}
+              </span>
+            </ng-container>
+          </p>
+          <p><strong>Venue:</strong> {{ bookingSummary?.schedule?.venue || 'N/A' }}</p>
+          <p><strong>Date:</strong> {{ (bookingSummary?.schedule?.date | date:'fullDate') || 'N/A' }}</p>
+          <p><strong>Time:</strong> {{ bookingSummary?.schedule?.time || 'N/A' }}</p>
+          
+          <!-- Seat Details -->
+          <h5 class="mt-4">Seat Details</h5>
+          <div class="seat-list" *ngIf="bookingSummary?.seats?.details">
+            <div class="d-flex flex-wrap">
+              <div class="seat-item me-2 mb-2 p-2" 
+                   style="border: 1px solid #eee; border-radius: 4px; background-color: #f9f9f9;"
+                   *ngFor="let seat of bookingSummary?.seats?.details">
+                <span class="fw-bold">{{ seat.row }}{{ seat.seatNumber }}</span>
+                <span class="badge ms-1" 
+                      [ngStyle]="{
+                        'background-color': seat.category === 'PREMIUM' ? '#ffa500' : 
+                                           seat.category === 'VIP' ? '#9c27b0' : '#1ea83c'
+                      }">
+                  {{ getCategoryDisplayName(seat.category) }}
+                </span>
+                <span class="price ms-2">₹{{ seat.price }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Pricing Details -->
+          <h5 class="mt-4">Payment Summary</h5>
+          <div class="pricing-details" *ngIf="bookingSummary?.pricing">
+            <div class="price-item d-flex justify-content-between py-1" style="border-bottom: 1px dashed #eee;">
+              <span>Subtotal</span>
+              <span>₹{{ bookingSummary?.pricing?.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item d-flex justify-content-between py-1" style="border-bottom: 1px dashed #eee;">
+              <span>Booking Fee</span>
+              <span>₹{{ bookingSummary?.pricing?.fees | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item d-flex justify-content-between py-1" style="border-bottom: 1px dashed #eee;">
+              <span>Tax</span>
+              <span>₹{{ bookingSummary?.pricing?.taxes | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="bookingSummary?.pricing?.discount && (bookingSummary?.pricing?.discount || 0) > 0" 
+                 class="price-item d-flex justify-content-between py-1" 
+                 style="border-bottom: 1px dashed #eee; color: #28a745;">
+              <span>
+                <i class="bi bi-tag me-1"></i>Promotion Discount
+                <span *ngIf="bookingSummary?.pricing?.discountCode" class="badge bg-success ms-1">
+                  {{ bookingSummary?.pricing?.discountCode }}
+                </span>
+              </span>
+              <span>-₹{{ bookingSummary?.pricing?.discount | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item total d-flex justify-content-between py-2 mt-2" 
+                 style="font-size: 18px; color: var(--bms-red); font-weight: 700; border-top: 2px solid var(--bms-red);">
+              <span>Total Paid</span>
+              <span>₹{{ bookingResponse?.booking?.totalAmount || bookingSummary?.pricing?.total | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="bookingSummary?.pricing?.savings && (bookingSummary?.pricing?.savings || 0) > 0" 
+                 class="savings-notice text-center mt-2 p-2" 
+                 style="background-color: #e8f5e8; border-radius: 4px; color: #28a745; font-weight: 600;">
+              <i class="bi bi-piggy-bank me-1"></i>You saved ₹{{ bookingSummary?.pricing?.savings | number:'1.2-2' }} with promotions!
+            </div>
+          </div>
+        </div>
+        
+        <!-- QR Code section -->
+        <div class="col-md-4 text-center" *ngIf="qrCodeImageUrl">
+          <img [src]="qrCodeImageUrl" alt="Booking QR Code" class="img-fluid qr-code">
+        </div>
+      </div>
+
+      
+      <!-- Action buttons -->
+      <div class="d-flex justify-content-between mt-4">
+        <div>
+          <button class="btn btn-outline-secondary me-2" (click)="viewBookings()">
+            <i class="bi bi-list"></i> View My Bookings
+          </button>
+          <button class="btn btn-success" 
+                  (click)="downloadTicket()" 
+                  [disabled]="downloadingTicket"
+                  *ngIf="bookingResponse?.booking">
+            <i class="bi" [ngClass]="downloadingTicket ? 'bi-hourglass-split' : 'bi-download'"></i>
+            {{ downloadingTicket ? 'Generating...' : 'Download Ticket' }}
+          </button>
+        </div>
+        <button class="btn btn-outline-primary" (click)="browseShows()">
+          <i class="bi bi-ticket"></i> Browse More Shows
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

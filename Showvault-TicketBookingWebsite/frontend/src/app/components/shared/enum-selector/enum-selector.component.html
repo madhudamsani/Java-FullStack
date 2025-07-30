@@ -1,0 +1,30 @@
+<div class="mb-3">
+  <label *ngIf="label" [for]="label.toLowerCase().replace(' ', '-')" class="form-label">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+  </label>
+  <select 
+    [id]="label.toLowerCase().replace(' ', '-')"
+    class="form-select"
+    [ngModel]="value"
+    (change)="handleChange($event)"
+    [required]="required"
+    [disabled]="disabled"
+    [class.is-invalid]="control && control.invalid && (control.dirty || control.touched)">
+    
+    <option *ngIf="includeEmpty" [value]="''">{{ emptyText }}</option>
+    
+    <option *ngFor="let value of enumValues" [ngValue]="value">
+      <span *ngIf="showIcons && getIcon(value)" class="enum-icon">
+        <i class="bi bi-{{ getIcon(value) }}"></i>
+      </span>
+      {{ getDisplayName(value) }}
+    </option>
+  </select>
+  
+  <div *ngIf="control && control.invalid && (control.dirty || control.touched)" class="invalid-feedback">
+    <div *ngIf="control.errors && control.errors['required']">
+      {{ label }} is required.
+    </div>
+  </div>
+</div>

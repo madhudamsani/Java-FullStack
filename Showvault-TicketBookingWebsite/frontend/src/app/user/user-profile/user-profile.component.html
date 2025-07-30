@@ -1,0 +1,213 @@
+<div class="container mt-4">
+  <!-- Organizer Header for Organizer Role -->
+  <app-organizer-header *ngIf="currentUser?.role === 'ROLE_ORGANIZER'"></app-organizer-header>
+  
+  <div class="row">
+    <div class="col-md-10 offset-md-1">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="activeTab === 'profile'" (click)="setActiveTab('profile')" href="javascript:void(0)">
+                <i class="bi bi-person"></i> Profile
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="activeTab === 'security'" (click)="setActiveTab('security')" href="javascript:void(0)">
+                <i class="bi bi-shield-lock"></i> Security
+              </a>
+            </li>
+            <!-- Preferences tab removed -->
+          </ul>
+        </div>
+        
+        <!-- Profile Tab -->
+        <div class="card-body" *ngIf="activeTab === 'profile'">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">My Profile</h3>
+            <button *ngIf="!isEditing" class="btn btn-outline-primary" (click)="toggleEdit()">
+              <i class="bi bi-pencil"></i> Edit Profile
+            </button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="updateSuccess" class="alert alert-success">
+            Profile updated successfully!
+          </div>
+          
+          <!-- Error message -->
+          <div *ngIf="updateError" class="alert alert-danger">
+            {{ updateError }}
+          </div>
+          
+          <div class="row">
+            <!-- Profile Picture -->
+            <div class="col-md-3 text-center mb-4">
+              <div class="profile-picture-container mb-2">
+                <img 
+                  [src]="currentUser?.profilePicture || getImageUrl(null, 'user')" 
+                  alt="Profile Picture" 
+                  class="img-fluid rounded-circle profile-picture"
+                >
+                <div class="profile-picture-overlay" (click)="triggerFileInput()">
+                  <i class="bi bi-camera"></i>
+                </div>
+              </div>
+              <input #fileInput type="file" accept="image/*" style="display: none" (change)="onFileSelected($event)">
+              <button class="btn btn-sm btn-outline-secondary" (click)="triggerFileInput()">
+                Change Picture
+              </button>
+              
+              <!-- Upload Progress -->
+              <div *ngIf="uploadProgress > 0" class="mt-2">
+                <div class="progress">
+                  <div class="progress-bar" [style.width.%]="uploadProgress" role="progressbar" [attr.aria-valuenow]="uploadProgress" aria-valuemin="0" aria-valuemax="100">
+                    {{ uploadProgress }}%
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Upload Error -->
+              <div *ngIf="uploadError" class="text-danger mt-2 small">
+                {{ uploadError }}
+              </div>
+            </div>
+            
+            <!-- Profile Info -->
+            <div class="col-md-9">
+              <div *ngIf="!isEditing && currentUser" class="profile-info">
+                <div class="row mb-3">
+                  <div class="col-md-4 fw-bold">Username:</div>
+                  <div class="col-md-8">{{ currentUser.username }}</div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4 fw-bold">Email:</div>
+                  <div class="col-md-8">{{ currentUser.email }}</div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4 fw-bold">Phone:</div>
+                  <div class="col-md-8">{{ currentUser.phoneNumber || currentUser.phone || 'Not provided' }}</div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4 fw-bold">Account Type:</div>
+                  <div class="col-md-8">
+                    <span class="badge" [ngClass]="{
+                      'bg-primary': currentUser.role === 'ROLE_USER',
+                      'bg-success': currentUser.role === 'ROLE_ORGANIZER',
+                      'bg-danger': currentUser.role === 'ROLE_ADMIN'
+                    }">
+                      {{ currentUser.role.replace('ROLE_', '') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <form *ngIf="isEditing" [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+                <div class="mb-3">
+                  <label for="username" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="username" formControlName="username" [disabled]="true">
+                </div>
+                
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" formControlName="email" [disabled]="true">
+                </div>
+                
+                <div class="mb-3">
+                  <label for="phoneNumber" class="form-label">Phone</label>
+                  <input type="tel" class="form-control" id="phoneNumber" formControlName="phoneNumber">
+                  <div *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" class="text-danger">
+                    Please enter a valid 10-digit phone number
+                  </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-secondary" (click)="toggleEdit()">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="profileForm.invalid">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Security Tab -->
+        <div class="card-body" *ngIf="activeTab === 'security'">
+          <h3 class="mb-4">Security Settings</h3>
+          
+          <!-- Password Change Form -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Change Password</h5>
+            </div>
+            <div class="card-body">
+              <!-- Success message -->
+              <div *ngIf="passwordUpdateSuccess" class="alert alert-success">
+                Password changed successfully!
+              </div>
+              
+              <!-- Error message -->
+              <div *ngIf="passwordUpdateError" class="alert alert-danger">
+                {{ passwordUpdateError }}
+              </div>
+              
+              <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+                <div class="mb-3">
+                  <label for="currentPassword" class="form-label">Current Password</label>
+                  <div class="input-group">
+                    <input [type]="showCurrentPassword ? 'text' : 'password'" class="form-control" id="currentPassword" formControlName="currentPassword">
+                    <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('current')">
+                      <i class="bi" [ngClass]="showCurrentPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                  </div>
+                  <div *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched" class="text-danger">
+                    Current password is required
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="newPassword" class="form-label">New Password</label>
+                  <div class="input-group">
+                    <input [type]="showNewPassword ? 'text' : 'password'" class="form-control" id="newPassword" formControlName="newPassword">
+                    <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('new')">
+                      <i class="bi" [ngClass]="showNewPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                  </div>
+                  <div *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="text-danger">
+                    Password must be at least 8 characters long
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                  <div class="input-group">
+                    <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" id="confirmPassword" formControlName="confirmPassword">
+                    <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('confirm')">
+                      <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                  </div>
+                  <div *ngIf="passwordForm.get('confirmPassword')?.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched" class="text-danger">
+                    Passwords do not match
+                  </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                  <button type="submit" class="btn btn-primary" [disabled]="passwordForm.invalid">Change Password</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Account Security section has been removed -->
+        </div>
+        
+        
+        <!-- My Bookings button only for regular users -->
+        <div class="card-footer" *ngIf="currentUser?.role === 'ROLE_USER'">
+          <button class="btn btn-outline-primary w-100" (click)="viewBookingHistory()">
+            <i class="bi bi-ticket-perforated"></i> View My Booking History
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,342 @@
+<div class="container-fluid py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item"><a routerLink="/shows">Shows</a></li>
+      <li class="breadcrumb-item"><a (click)="goBack()" href="javascript:void(0)">Select Seats</a></li>
+      <li class="breadcrumb-item active">Payment</li>
+    </ol>
+  </nav>
+
+  <!-- Page Title - BookMyShow Style -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0" style="color: var(--bms-red); font-weight: 700;">Secure Payment</h1>
+    <button class="btn btn-outline-secondary" 
+            style="border-color: var(--bms-red); color: var(--bms-red);"
+            (click)="goBack()">
+      <i class="bi bi-arrow-left me-2"></i>Back
+    </button>
+  </div>
+  
+  <!-- Booking Timer - BookMyShow Style -->
+  <div class="booking-timer mb-4 p-2 text-center" style="background-color: #f8f9fa; border-radius: 8px;">
+    <i class="bi bi-clock-history me-2" style="color: var(--bms-red);"></i>
+    <span style="font-weight: 600;">Complete your payment within 10:00 minutes</span>
+  </div>
+
+  <!-- Loading State -->
+  <div class="row" *ngIf="loading">
+    <div class="col-12">
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="row" *ngIf="error">
+    <div class="col-12">
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+        <button *ngIf="!error.includes('Try Again')" class="btn btn-link" (click)="retryPayment()">
+          Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row" *ngIf="!loading">
+    <div class="col-lg-8">
+      <!-- Payment Method Selection - BookMyShow Style -->
+      <div class="card mb-4" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="card-header" style="background-color: var(--bms-red); color: white; border-radius: 8px 8px 0 0;">
+          <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Payment Method</h5>
+        </div>
+        <div class="card-body">
+          <!-- Saved Payment Methods - BookMyShow Style -->
+          <div *ngIf="paymentMethods.length > 0" class="saved-payment-methods mb-4">
+            <h6 class="mb-3" style="color: var(--bms-red); font-weight: 600;">Select a payment method</h6>
+            <div class="payment-methods-list">
+              <div *ngFor="let method of paymentMethods" 
+                   class="payment-method-item mb-3 p-3" 
+                   style="border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;"
+                   [ngStyle]="{'background-color': selectedPaymentMethod?.id === method.id ? '#f8f9fa' : 'white', 
+                              'border-color': selectedPaymentMethod?.id === method.id ? 'var(--bms-red)' : '#eee',
+                              'box-shadow': selectedPaymentMethod?.id === method.id ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'}"
+                   [class.disabled]="processing"
+                   (click)="!processing && selectPaymentMethod(method)">
+                <div class="d-flex align-items-center">
+                  <div class="payment-method-icon p-2" style="background-color: #f8f9fa; border-radius: 8px;">
+                    <app-status-badge
+                      [status]="method.type"
+                      [metadata]="PAYMENT_METHOD_METADATA"
+                      [showIcon]="true"
+                      [size]="'md'">
+                    </app-status-badge>
+                  </div>
+                  <div class="payment-method-details ms-3">
+                    <div class="payment-method-name fw-bold">{{ method.name }}</div>
+                    <div class="payment-method-info text-muted small" *ngIf="method.expiryDate">
+                      Expires {{ method.expiryDate }}
+                    </div>
+                  </div>
+                  <div class="ms-auto">
+                    <i class="bi bi-check-circle-fill" style="color: var(--bms-red); font-size: 1.2rem;" *ngIf="selectedPaymentMethod?.id === method.id"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add New Card Button - BookMyShow Style -->
+          <div class="add-new-card mb-4">
+            <button class="btn" 
+                    style="border: 2px dashed var(--bms-red); color: var(--bms-red); background-color: #fff; font-weight: 600; border-radius: 8px; padding: 10px 20px;"
+                    (click)="toggleNewCardForm()"
+                    [disabled]="processing">
+              <i class="bi" [ngClass]="showNewCardForm ? 'bi-dash-circle' : 'bi-plus-circle'"></i>
+              {{ showNewCardForm ? 'Cancel' : 'Add New Payment Method' }}
+            </button>
+          </div>
+
+          <!-- New Card Form - BookMyShow Style -->
+          <div *ngIf="showNewCardForm" class="new-card-form p-3 mt-3" style="background-color: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
+            <h6 class="mb-3" style="color: var(--bms-red); font-weight: 600;"><i class="bi bi-credit-card-2-front me-2"></i>Enter card details</h6>
+            <form [formGroup]="newCardForm" (ngSubmit)="addNewCard()">
+              <div class="mb-3">
+                <label for="cardNumber" class="form-label">Card Number</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="cardNumber" 
+                       formControlName="cardNumber"
+                       [class.is-invalid]="newCardForm.get('cardNumber')?.invalid && newCardForm.get('cardNumber')?.touched"
+                       placeholder="1234 5678 9012 3456"
+                       maxlength="16">
+                <div class="invalid-feedback">
+                  {{ getErrorMessage('cardNumber') }}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="nameOnCard" class="form-label">Name on Card</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="nameOnCard" 
+                       formControlName="nameOnCard"
+                       [class.is-invalid]="newCardForm.get('nameOnCard')?.invalid && newCardForm.get('nameOnCard')?.touched"
+                       placeholder="John Smith">
+                <div class="invalid-feedback">
+                  {{ getErrorMessage('nameOnCard') }}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="expiryDate" class="form-label">Expiry Date</label>
+                  <input type="text" 
+                         class="form-control" 
+                         id="expiryDate" 
+                         formControlName="expiryDate"
+                         [class.is-invalid]="newCardForm.get('expiryDate')?.invalid && newCardForm.get('expiryDate')?.touched"
+                         placeholder="MM/YY"
+                         maxlength="5">
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('expiryDate') }}
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="cvv" class="form-label">CVV</label>
+                  <input type="password" 
+                         class="form-control" 
+                         id="cvv" 
+                         formControlName="cvv"
+                         [class.is-invalid]="newCardForm.get('cvv')?.invalid && newCardForm.get('cvv')?.touched"
+                         placeholder="123"
+                         maxlength="4">
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('cvv') }}
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" 
+                      class="btn"
+                      style="background-color: var(--bms-red); color: black; font-weight: 600;"
+                      [disabled]="newCardForm.invalid || processing">
+                <i class="bi" [ngClass]="processing ? 'bi-hourglass-split' : 'bi-plus-circle'"></i>
+                {{ processing ? 'Adding Card...' : 'Add Card' }}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Summary -->
+    <div class="col-lg-4">
+      <div class="card booking-summary" *ngIf="bookingSummary" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="card-header" style="background-color: var(--bms-red); color: white; border-radius: 8px 8px 0 0;">
+          <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Booking Summary</h5>
+        </div>
+        <div class="card-body">
+          <!-- Show Details -->
+          <div class="show-details mb-4">
+            <div class="d-flex">
+              <img [src]="bookingSummary.show.posterUrl || bookingSummary.show.imageUrl || bookingSummary.show.image || getImageUrl(null, bookingSummary.show.type, bookingSummary.show.title)" 
+                   [alt]="bookingSummary.show.title" 
+                   class="me-3" 
+                   style="width: 80px; height: auto; object-fit: cover; border-radius: 4px;">
+              <div>
+                <h6>{{ bookingSummary.show.title }}</h6>
+                <div class="text-muted">
+                  <div><i class="bi bi-calendar3 me-2"></i>{{ bookingSummary.schedule.date }}</div>
+                  <div><i class="bi bi-clock me-2"></i>{{ bookingSummary.schedule.time }}</div>
+                  <div><i class="bi bi-geo-alt me-2"></i>{{ bookingSummary.schedule.venue }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Seats - BookMyShow Style -->
+          <div class="selected-seats mb-4">
+            <h6 class="mb-3" style="color: var(--bms-red); font-weight: 600;">Selected Seats</h6>
+            <div class="seat-list">
+              <div class="d-flex flex-wrap">
+                <div class="seat-item me-2 mb-2 p-2" 
+                     style="border: 1px solid #eee; border-radius: 4px; background-color: #f9f9f9;"
+                     *ngFor="let seat of bookingSummary.seats.details">
+                  <span class="fw-bold">{{ seat.row }}{{ seat.seatNumber }}</span>
+                  <span class="badge ms-1" 
+                        [ngStyle]="{
+                          'background-color': seat.category === 'PREMIUM' ? '#ffa500' : 
+                                             seat.category === 'VIP' ? '#9c27b0' : '#1ea83c'
+                        }">
+                    {{ getCategoryDisplayName(seat.category) }}
+                  </span>
+                  <span class="price ms-2">₹{{ seat.price }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Promotion Code Section -->
+          <div class="promotion-section mb-4">
+            <h6 class="mb-3" style="color: var(--bms-red); font-weight: 600;">
+              <i class="bi bi-tag me-2"></i>Promotion Code
+            </h6>
+            <div class="promotion-input-group">
+              <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       placeholder="Enter promotion code"
+                       [(ngModel)]="promotionCode"
+                       [disabled]="promotionApplied || processing"
+                       (keyup.enter)="applyPromotionCode()"
+                       style="border-radius: 4px 0 0 4px;">
+                <button class="btn btn-outline-secondary" 
+                        type="button"
+                        (click)="promotionApplied ? removePromotionCode() : applyPromotionCode()"
+                        [disabled]="processing || (!promotionCode && !promotionApplied)"
+                        style="border-radius: 0 4px 4px 0; border-color: var(--bms-red); color: var(--bms-red);">
+                  <i class="bi" [ngClass]="promotionApplied ? 'bi-x-circle' : 'bi-check-circle'"></i>
+                  {{ promotionApplied ? 'Remove' : 'Apply' }}
+                </button>
+              </div>
+              
+              <!-- Promotion Status Messages -->
+              <div *ngIf="promotionMessage" class="mt-2">
+                <div class="alert" 
+                     [ngClass]="{
+                       'alert-success': promotionApplied,
+                       'alert-danger': !promotionApplied && promotionMessage
+                     }" 
+                     style="padding: 8px 12px; font-size: 14px;">
+                  <i class="bi" [ngClass]="promotionApplied ? 'bi-check-circle' : 'bi-exclamation-circle'"></i>
+                  {{ promotionMessage }}
+                </div>
+              </div>
+              
+              <!-- Applied Promotion Details -->
+              <div *ngIf="appliedPromotion" class="applied-promotion mt-2 p-2" 
+                   style="background-color: #e8f5e8; border: 1px solid #28a745; border-radius: 4px;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ appliedPromotion.name }}</strong>
+                    <div class="text-muted small">{{ appliedPromotion.description }}</div>
+                  </div>
+                  <div class="text-success fw-bold">
+                    -₹{{ promotionDiscount | number:'1.2-2' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing - BookMyShow Style -->
+          <div class="pricing mt-4">
+            <h6 class="mb-3" style="color: var(--bms-red); font-weight: 600;">Price Details</h6>
+            <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+              <span>Subtotal</span>
+              <span>₹{{ bookingSummary.pricing.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+              <span>Booking Fee (5%)</span>
+              <span>₹{{ bookingSummary.pricing.fees | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+              <span>Tax (8%)</span>
+              <span>₹{{ bookingSummary.pricing.taxes | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="promotionApplied && promotionDiscount > 0" 
+                 class="price-item d-flex justify-content-between py-2" 
+                 style="border-bottom: 1px dashed #eee; color: #28a745;">
+              <span>
+                <i class="bi bi-tag me-1"></i>Promotion Discount ({{ appliedPromotion?.code }})
+              </span>
+              <span>-₹{{ promotionDiscount | number:'1.2-2' }}</span>
+            </div>
+            <div class="price-item total d-flex justify-content-between py-2 mt-2" style="font-size: 18px; color: var(--bms-red); font-weight: 700;">
+              <span>Total Amount</span>
+              <span>₹{{ getFinalTotal() | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="promotionApplied && promotionDiscount > 0" 
+                 class="savings-notice text-center mt-2 p-2" 
+                 style="background-color: #e8f5e8; border-radius: 4px; color: #28a745; font-weight: 600;">
+              <i class="bi bi-piggy-bank me-1"></i>You saved ₹{{ promotionDiscount | number:'1.2-2' }}!
+            </div>
+          </div>
+
+          <!-- Action Buttons - BookMyShow Style -->
+          <div class="action-buttons mt-4 d-flex justify-content-between">
+            <button class="btn back-button" 
+                    style="border: 2px solid var(--bms-red); color: var(--bms-red); font-weight: 600; border-radius: 8px; padding: 10px 20px;"
+                    (click)="goBack()"
+                    [disabled]="processing">
+              <i class="bi bi-arrow-left me-2"></i> Back to Seats
+            </button>
+            <button class="btn checkout-button" 
+                    style="background-color: var(--bms-red); color: black; font-weight: 700; border-radius: 8px; padding: 10px 25px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+                    (click)="completeBooking()"
+                    [disabled]="!selectedPaymentMethod || processing">
+              <i class="bi" [ngClass]="processing ? 'bi-hourglass-split' : 'bi-lock'"></i>
+              {{ processing ? 'Processing...' : 'Pay Now ₹' + (getFinalTotal() | number:'1.0-0') }}
+            </button>
+          </div>
+          
+          <!-- Secure Payment Notice - BookMyShow Style -->
+          <div class="secure-payment-notice mt-3 text-center">
+            <small class="text-muted">
+              <i class="bi bi-shield-lock me-1" style="color: var(--bms-red);"></i>
+              Your payment information is secure. We use industry-standard encryption to protect your data.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

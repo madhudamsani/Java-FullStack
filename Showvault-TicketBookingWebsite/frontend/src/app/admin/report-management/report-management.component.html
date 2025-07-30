@@ -1,0 +1,288 @@
+<div class="card">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Reports & Analytics</h5>
+    <div class="btn-group">
+      <button class="btn btn-sm btn-outline-light" (click)="exportReportCSV()">
+        <i class="bi bi-file-earmark-excel"></i> Export CSV
+      </button>
+      <button class="btn btn-sm btn-outline-light" (click)="printReport()">
+        <i class="bi bi-printer"></i> Print
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Error message -->
+    <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = ''"></button>
+    </div>
+    
+
+    
+    <!-- Report tabs -->
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'users'" (click)="setActiveTab('users')" href="javascript:void(0)">
+          <i class="bi bi-people"></i> User Analytics
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')" href="javascript:void(0)">
+          <i class="bi bi-graph-up"></i> Sales Reports
+        </a>
+      </li>
+    </ul>
+    
+    <!-- Loading spinner -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading report data...</p>
+    </div>
+    
+    <!-- User Report Tab -->
+    <div class="tab-content mt-4" *ngIf="!isLoading && activeTab === 'users' && userReport">
+      <div class="row">
+        <!-- User Summary Cards -->
+        <div class="col-md-3 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Total Users</h6>
+              <div class="display-5 fw-bold text-primary">{{ userReport.totalUsers }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Active Users</h6>
+              <div class="display-5 fw-bold text-success">{{ userReport.activeUsers }}</div>
+              <div class="text-muted small">{{ getPercentage(userReport.activeUsers, userReport.totalUsers) }} of total</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">New Users</h6>
+              <div class="display-5 fw-bold text-info">{{ userReport.newUsers }}</div>
+              <div class="text-muted small">This month</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Avg. Daily Logins</h6>
+              <div class="display-5 fw-bold text-warning">{{ userReport.userActivity && userReport.userActivity.length > 0 ? userReport.userActivity[userReport.userActivity.length - 1].logins : 0 }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Users by Role Chart -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">Users by Role</h6>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Role</th>
+                      <th>Count</th>
+                      <th>Percentage</th>
+                      <th>Distribution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let role of ['user', 'organizer', 'admin']">
+                      <td>
+                        <span class="badge" [class]="
+                          role === 'user' ? 'bg-primary' : 
+                          role === 'organizer' ? 'bg-success' : 
+                          'bg-danger'
+                        ">{{ role }}</span>
+                      </td>
+                      <td>{{ userReport.usersByRole && role === 'user' ? userReport.usersByRole.user : 
+                           role === 'organizer' && userReport.usersByRole ? userReport.usersByRole.organizer : 
+                           role === 'admin' && userReport.usersByRole ? userReport.usersByRole.admin : 0 }}</td>
+                      <td>{{ getPercentage(
+                           role === 'user' && userReport.usersByRole ? userReport.usersByRole.user : 
+                           role === 'organizer' && userReport.usersByRole ? userReport.usersByRole.organizer : 
+                           role === 'admin' && userReport.usersByRole ? userReport.usersByRole.admin : 0, 
+                           userReport.totalUsers) }}</td>
+                      <td>
+                        <div class="progress">
+                          <div class="progress-bar" 
+                               [class]="
+                                 role === 'user' ? 'bg-primary' : 
+                                 role === 'organizer' ? 'bg-success' : 
+                                 'bg-danger'
+                               "
+                               [style.width.%]="getPercentageValue(
+                                 role === 'user' && userReport.usersByRole ? userReport.usersByRole.user : 
+                                 role === 'organizer' && userReport.usersByRole ? userReport.usersByRole.organizer : 
+                                 role === 'admin' && userReport.usersByRole ? userReport.usersByRole.admin : 0, 
+                                 userReport.totalUsers)">
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- User Activity Chart -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">User Activity</h6>
+            </div>
+            <div class="card-body">
+              <div class="chart-container" style="position: relative; height:250px;">
+                <!-- Placeholder for chart - would use a chart library like Chart.js in real implementation -->
+                <div class="placeholder-chart">
+                  <div *ngFor="let activity of userReport.userActivity" class="activity-bar" 
+                       [style.height.px]="activity.logins / 5" 
+                       [title]="activity.date + ': ' + activity.logins + ' logins'">
+                  </div>
+                </div>
+                <div class="text-center mt-3">
+                  <small class="text-muted">Login activity over time</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sales Report Tab -->
+    <div class="tab-content mt-4" *ngIf="!isLoading && activeTab === 'sales' && salesReport">
+      <div class="row">
+        <!-- Sales Summary Cards -->
+        <div class="col-md-4 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Total Revenue</h6>
+              <div class="display-5 fw-bold text-primary">	'₹'{{ salesReport.totalRevenue | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Tickets Sold</h6>
+              <div class="display-5 fw-bold text-success">{{ salesReport.ticketsSold }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h6 class="card-title">Avg. Ticket Price</h6>
+              <div class="display-5 fw-bold text-info">	₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Revenue by Month Chart -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">Revenue by Month</h6>
+            </div>
+            <div class="card-body">
+              <div class="chart-container" style="position: relative; height:300px;">
+                <!-- Placeholder for chart - would use a chart library like Chart.js in real implementation -->
+                <div class="placeholder-chart">
+                  <div *ngFor="let monthData of salesReport.revenueByMonth" class="revenue-bar" 
+                       [style.height.px]="monthData.revenue / 1000" 
+                       [title]="monthData.month + ': 	₹' + monthData.revenue">
+                  </div>
+                </div>
+                <div class="text-center mt-3">
+                  <small class="text-muted">Monthly revenue</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Top Selling Shows -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">Top Selling Shows</h6>
+            </div>
+            <div class="card-body">
+              <div class="list-group">
+                <div *ngFor="let show of salesReport.topSellingShows" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">{{ show.name || show.title }}</h6>
+                    <small>ID: {{ show.id }}</small>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{ show.ticketsSold }} tickets</span>
+                </div>
+                <div *ngIf="salesReport.topSellingShows.length === 0" class="list-group-item text-center text-muted">
+                  No data available
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Revenue by Show -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h6 class="mb-0">Revenue by Show</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Show ID</th>
+                  <th>Title</th>
+                  <th>Revenue</th>
+                  <th>Percentage of Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let show of salesReport.revenueByShow">
+                  <td>{{ show.showId }}</td>
+                  <td>{{ show.showTitle }}</td>
+                  <td>	₹{{ show.revenue | number:'1.2-2' }}</td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-bar bg-success" 
+                           [style.width.%]="getPercentageValue(show.revenue, salesReport.totalRevenue)">
+                        {{ getPercentage(show.revenue, salesReport.totalRevenue) }}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="!salesReport.revenueByShow || salesReport.revenueByShow.length === 0">
+                  <td colspan="4" class="text-center">No data available</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS for placeholder charts -->

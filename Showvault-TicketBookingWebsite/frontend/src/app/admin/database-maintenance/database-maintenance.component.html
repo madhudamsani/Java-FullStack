@@ -1,0 +1,216 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Database Maintenance</h5>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        This page provides tools to maintain database consistency. Use these tools with caution as they may modify data.
+      </div>
+
+      <!-- Database Statistics -->
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Database Statistics</h6>
+          <button class="btn btn-sm btn-outline-secondary" (click)="loadDatabaseStats()" [disabled]="isLoadingStats">
+            <span *ngIf="isLoadingStats" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i *ngIf="!isLoadingStats" class="fas fa-sync-alt me-1"></i> Refresh
+          </button>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingStats" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading database statistics...</p>
+          </div>
+
+          <div *ngIf="!isLoadingStats && stats">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h3 class="mb-0">{{ stats.venueCount || 0 }}</h3>
+                    <p class="text-muted mb-0">Venues</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h3 class="mb-0">{{ stats.seatCount || 0 }}</h3>
+                    <p class="text-muted mb-0">Seats</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h3 class="mb-0">{{ stats.scheduleCount || 0 }}</h3>
+                    <p class="text-muted mb-0">Show Schedules</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h3 class="mb-0">{{ stats.bookingCount || 0 }}</h3>
+                    <p class="text-muted mb-0">Bookings</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inconsistencies -->
+            <div *ngIf="hasInconsistencies()" class="mt-4">
+              <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Database inconsistencies detected!</strong> Use the maintenance tools below to fix these issues.
+              </div>
+
+              <!-- Venues without seats -->
+              <div *ngIf="stats.venuesWithoutSeats && stats.venuesWithoutSeats.length > 0" class="mt-3">
+                <h6 class="text-danger">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  {{ stats.venuesWithoutSeats.length }} venues with capacity but no seats:
+                </h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                        <th>Actual Seats</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let venue of stats.venuesWithoutSeats">
+                        <td>{{ venue.id }}</td>
+                        <td>{{ venue.name }}</td>
+                        <td>{{ venue.capacity }}</td>
+                        <td>{{ venue.seat_count }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Venues with capacity mismatches -->
+              <div *ngIf="stats.venueCapacityMismatches && stats.venueCapacityMismatches.length > 0" class="mt-3">
+                <h6 class="text-danger">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  {{ stats.venueCapacityMismatches.length }} venues with capacity not matching seat count:
+                </h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                        <th>Actual Seats</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let venue of stats.venueCapacityMismatches">
+                        <td>{{ venue.id }}</td>
+                        <td>{{ venue.name }}</td>
+                        <td>{{ venue.capacity }}</td>
+                        <td>{{ venue.seat_count }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Show schedules with total_seats mismatches -->
+              <div *ngIf="stats.scheduleTotalSeatsMismatches && stats.scheduleTotalSeatsMismatches.length > 0" class="mt-3">
+                <h6 class="text-danger">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  {{ stats.scheduleTotalSeatsMismatches.length }} show schedules with total_seats not matching venue capacity:
+                </h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Show ID</th>
+                        <th>Venue ID</th>
+                        <th>Total Seats</th>
+                        <th>Venue Capacity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let schedule of stats.scheduleTotalSeatsMismatches">
+                        <td>{{ schedule.id }}</td>
+                        <td>{{ schedule.show_id }}</td>
+                        <td>{{ schedule.venue_id }}</td>
+                        <td>{{ schedule.total_seats }}</td>
+                        <td>{{ schedule.capacity }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- No inconsistencies -->
+            <div *ngIf="!hasInconsistencies()" class="mt-4">
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>No database inconsistencies detected!</strong> All venue capacities, seat counts, and show schedule seat counts are consistent.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Maintenance Tools -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h6 class="mb-0">Seat Count Consistency</h6>
+            </div>
+            <div class="card-body">
+              <p>
+                This tool checks and fixes inconsistencies between venue capacities, actual seat counts, and show schedule seat counts.
+                It will:
+              </p>
+              <ul>
+                <li>Update venue capacities to match actual seat counts</li>
+                <li>Update show schedule total seats to match venue capacities</li>
+                <li>Update show schedule available seats based on bookings</li>
+                <li>Generate seats for venues that have capacity but no seats</li>
+              </ul>
+              <button 
+                class="btn btn-primary mt-3" 
+                (click)="fixSeatCounts()" 
+                [disabled]="isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Fix Seat Count Inconsistencies
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results section -->
+      <div *ngIf="message" class="mt-4">
+        <div class="alert" [ngClass]="{'alert-success': success, 'alert-danger': !success}">
+          <div class="d-flex align-items-center">
+            <i *ngIf="success" class="fas fa-check-circle me-2"></i>
+            <i *ngIf="!success" class="fas fa-exclamation-circle me-2"></i>
+            <div>
+              <strong>{{ success ? 'Success' : 'Error' }}</strong>
+              <p class="mb-0">{{ message }}</p>
+              <p *ngIf="error" class="mb-0 mt-2 text-danger">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

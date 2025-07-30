@@ -1,0 +1,132 @@
+.profile-info {
+  padding: 10px;
+}
+
+.card-header {
+  background-color: #0d6efd !important; /* Using the primary theme color */
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-primary {
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Profile picture styling */
+.profile-picture-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-picture-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-picture-overlay i {
+  color: white;
+  font-size: 2rem;
+}
+
+.profile-picture-container:hover .profile-picture-overlay {
+  opacity: 1;
+}
+
+/* Tab styling */
+.nav-tabs .nav-link {
+  color: rgba(255, 255, 255, 0.8);
+  border: none;
+  padding: 0.75rem 1rem;
+}
+
+.nav-tabs .nav-link:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  background-color: white;
+  border: none;
+  font-weight: 500;
+}
+
+/* Card styling */
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.card-header {
+  padding: 1rem 1.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Form styling */
+.form-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-text {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Progress bar styling */
+.progress {
+  height: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.progress-bar {
+  background-color: #0d6efd;
+}
+
+/* Badge styling */
+.badge {
+  padding: 0.5em 0.75em;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}

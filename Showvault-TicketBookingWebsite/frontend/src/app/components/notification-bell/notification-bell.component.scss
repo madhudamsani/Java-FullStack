@@ -1,0 +1,32 @@
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: inline-block;
+  
+  i {
+    font-size: 1.25rem;
+    color: white;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 50%;
+    min-width: 1rem;
+    min-height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(25%, -25%);
+  }
+  
+  &:hover {
+    i {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}

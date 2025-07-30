@@ -1,0 +1,112 @@
+.admin-sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #212529;
+  color: #fff;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for sidebar */
+.admin-sidebar-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sidebar-container::-webkit-scrollbar-track {
+  background: #2c3136;
+}
+
+.admin-sidebar-container::-webkit-scrollbar-thumb {
+  background: #495057;
+  border-radius: 4px;
+}
+
+.admin-sidebar-container::-webkit-scrollbar-thumb:hover {
+  background: #6c757d;
+}
+
+/* Sidebar Logo */
+.sidebar-logo {
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  text-decoration: none;
+}
+
+.logo-container i {
+  font-size: 1.75rem;
+  margin-right: 0.75rem;
+  color: #0d6efd;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+  flex-grow: 1;
+  padding: 1rem 0;
+}
+
+.menu-category {
+  margin-bottom: 1.5rem;
+}
+
+.menu-category-label {
+  display: block;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-menu .nav-link {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-menu .nav-link i {
+  font-size: 1.1rem;
+  margin-right: 0.75rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-menu .nav-link:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-menu .nav-link.active {
+  color: #fff;
+  background-color: rgba(13, 110, 253, 0.2);
+  border-left-color: #0d6efd;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.app-version {
+  font-size: 0.75rem;
+  color: #6c757d;
+}

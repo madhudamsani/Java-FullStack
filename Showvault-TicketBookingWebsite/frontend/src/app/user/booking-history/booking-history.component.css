@@ -1,0 +1,176 @@
+.card-header {
+  background-color: #dc3545 !important; /* Using the red theme color */
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.35em 0.65em;
+}
+
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
+  margin-right: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn i {
+  font-size: 1rem;
+}
+
+.btn-group .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-group .btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Specific styles for action buttons */
+.btn-outline-primary {
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-info {
+  color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+/* Add tooltip-like effect on hover */
+.btn[title]:hover:not(:disabled)::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 5px;
+}
+
+/* Booking row styles */
+.booking-row {
+  transition: all 0.3s ease;
+}
+
+/* Remove the old hover effect since tooltip-row handles it */
+.booking-row:hover:not(.tooltip-row) {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Make sure action buttons are positioned properly */
+.btn-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Animation for alerts */
+.alert {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Tooltip row styles */
+.tooltip-row {
+  cursor: help;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.tooltip-row:hover {
+  background-color: rgba(0, 123, 255, 0.08) !important;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced tooltip styling for entire row */
+.tooltip-row[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(33, 37, 41, 0.95);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-top: -8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.tooltip-row[title]:hover::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: rgba(33, 37, 41, 0.95);
+  z-index: 1001;
+  margin-top: 2px;
+}
+
+/* Responsive tooltip positioning */
+@media (max-width: 768px) {
+  .tooltip-row[title]:hover::after {
+    font-size: 12px;
+    padding: 8px 12px;
+    max-width: 250px;
+    white-space: normal;
+    word-wrap: break-word;
+    left: 20px;
+    transform: none;
+  }
+  
+  .tooltip-row[title]:hover::before {
+    left: 40px;
+    transform: none;
+  }
+}
+
+/* Ensure tooltip doesn't interfere with action buttons */
+.tooltip-row td:last-child {
+  position: relative;
+  z-index: 1002;
+}
+
+.tooltip-row:hover td:last-child {
+  background-color: transparent;
+}

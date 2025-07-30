@@ -1,0 +1,109 @@
+<div class="organizer-sidebar-container">
+
+  <!-- Navigation Menu -->
+  <div class="sidebar-menu">
+    <div class="menu-category">
+      <span class="menu-category-label">MAIN</span>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/dashboard" 
+             routerLinkActive="active">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="menu-category">
+      <span class="menu-category-label">MANAGEMENT</span>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/shows" 
+             routerLinkActive="active">
+            <i class="bi bi-film"></i>
+            <span>Shows Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/shows/create" 
+             routerLinkActive="active">
+            <i class="bi bi-plus-circle"></i>
+            <span>Create Show</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/promotions" 
+             routerLinkActive="active">
+            <i class="bi bi-megaphone"></i>
+            <span>Promotions</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="menu-category">
+      <span class="menu-category-label">ANALYTICS</span>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/sales-report" 
+             routerLinkActive="active">
+            <i class="bi bi-graph-up"></i>
+            <span>Sales Report</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/audience-analytics" 
+             routerLinkActive="active">
+            <i class="bi bi-people"></i>
+            <span>Audience Analytics</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="menu-category">
+      <span class="menu-category-label">COMMUNICATION</span>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/organizer/customer-messages" 
+             routerLinkActive="active">
+            <i class="bi bi-chat-dots"></i>
+            <span>Customer Messages</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/user/profile" 
+             routerLinkActive="active">
+            <i class="bi bi-person"></i>
+            <span>My Profile</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/" 
+             routerLinkActive="active">
+            <i class="bi bi-house"></i>
+            <span>Back to Site</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             href="javascript:void(0)" 
+             (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

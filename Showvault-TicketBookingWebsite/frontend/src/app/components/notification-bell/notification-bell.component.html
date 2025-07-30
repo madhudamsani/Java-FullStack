@@ -1,0 +1,6 @@
+<div class="notification-bell" (click)="goToNotifications()">
+  <i class="bi bi-bell-fill"></i>
+  <span *ngIf="unreadCount > 0" class="badge bg-danger notification-badge">
+    {{ unreadCount > 99 ? '99+' : unreadCount }}
+  </span>
+</div>

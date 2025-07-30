@@ -1,0 +1,248 @@
+<div class="container py-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="display-6 mb-0">Discover Shows</h1>
+      <p class="text-muted mb-0">Find and book tickets for your favorite shows</p>
+    </div>
+    <div class="d-none d-md-block">
+      <span *ngIf="totalShows > 0" class="text-muted">Showing {{ shows.length }} of {{ totalShows }} shows</span>
+    </div>
+  </div>
+
+  <!-- Category Filter Buttons -->
+  <div class="category-filter mb-4">
+    <button 
+      *ngFor="let category of categories" 
+      class="btn" 
+      [class.active]="selectedCategory === category"
+      (click)="selectCategory(category)">
+      <i class="bi bi-tag"></i>{{ getCategoryLabel(category) }}
+    </button>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="filter-section p-4 mb-4">
+    <div class="row g-3">
+      <!-- Enhanced Search Box -->
+      <div class="col-md-6 col-lg-4">
+        <div class="search-box">
+          <i class="bi bi-search search-icon"></i>
+          <input 
+            type="text" 
+            class="form-control" 
+            [placeholder]="selectedCategory === 'theater' ? 'Search theatrical shows by name or city...' : 'Search shows, events, or movies...'"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="handleSearch()"
+            [ngModelOptions]="{standalone: true}">
+          <button *ngIf="searchQuery" class="btn btn-link search-clear" (click)="searchQuery = ''; loadShows()">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Filter -->
+      <div class="col-md-6 col-lg-3">
+        <div class="dropdown filter-dropdown">
+          <button class="btn dropdown-toggle" type="button" id="dateFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-calendar3 me-2"></i>
+            {{ getDateFilterLabel() }}
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dateFilterDropdown">
+            <div class="mb-3">
+              <label for="dateFrom" class="form-label">From</label>
+              <input type="date" class="form-control" id="dateFrom" [formControl]="dateFromControl">
+            </div>
+            <div class="mb-3">
+              <label for="dateTo" class="form-label">To</label>
+              <input type="date" class="form-control" id="dateTo" [formControl]="dateToControl">
+            </div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" (click)="applyDateFilter()">Apply</button>
+              <button class="btn btn-outline-secondary" (click)="clearDateFilter()">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Filter -->
+      <div class="col-md-6 col-lg-3">
+        <div class="dropdown filter-dropdown">
+          <button class="btn dropdown-toggle" type="button" id="priceFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-cash-coin me-2"></i>
+            {{ getPriceFilterLabel() }}
+          </button>
+          <div class="dropdown-menu" aria-labelledby="priceFilterDropdown">
+            <div class="mb-3">
+              <label for="priceMin" class="form-label">Min Price (₹)</label>
+              <input type="number" class="form-control" id="priceMin" [formControl]="priceMinControl" min="0">
+            </div>
+            <div class="mb-3">
+              <label for="priceMax" class="form-label">Max Price (₹)</label>
+              <input type="number" class="form-control" id="priceMax" [formControl]="priceMaxControl" min="0">
+            </div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" (click)="applyPriceFilter()">Apply</button>
+              <button class="btn btn-outline-secondary" (click)="clearPriceFilter()">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sort Filter -->
+      <div class="col-md-6 col-lg-2">
+        <select class="form-select" [(ngModel)]="sortOption" (change)="applySorting()" [ngModelOptions]="{standalone: true}">
+          <option value="relevance">Relevance</option>
+          <option value="date-asc">Date (Earliest)</option>
+          <option value="date-desc">Date (Latest)</option>
+          <option value="price-asc">Price (Low to High)</option>
+          <option value="price-desc">Price (High to Low)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Filters -->
+    <div *ngIf="hasActiveFilters()" class="mt-3 d-flex flex-wrap align-items-center">
+      <span class="me-2 text-muted">Active filters:</span>
+      
+      <div *ngIf="selectedCategory !== 'all'" class="badge me-2 mb-2">
+        {{ getCategoryLabel(selectedCategory) }}
+        <i class="bi bi-x-circle ms-1" role="button" (click)="clearCategoryFilter()"></i>
+      </div>
+      
+      <div *ngIf="searchQuery" class="badge me-2 mb-2">
+        Search: {{ searchQuery }}
+        <i class="bi bi-x-circle ms-1" role="button" (click)="clearSearchFilter()"></i>
+      </div>
+      
+      <div *ngIf="dateFromControl.value || dateToControl.value" class="badge me-2 mb-2">
+        Date: {{ getDateFilterLabel() }}
+        <i class="bi bi-x-circle ms-1" role="button" (click)="clearDateFilter()"></i>
+      </div>
+      
+      <div *ngIf="priceMinControl.value || priceMaxControl.value" class="badge me-2 mb-2">
+        Price: {{ getPriceFilterLabel() }}
+        <i class="bi bi-x-circle ms-1" role="button" (click)="clearPriceFilter()"></i>
+      </div>
+      
+      <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="resetAllFilters()">
+        <i class="bi bi-x-circle me-1"></i>Clear All
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton -->
+  <div *ngIf="loading" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+    <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="col">
+      <div class="skeleton-card">
+        <div class="skeleton-img"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ error }}
+    <button class="btn btn-outline-danger ms-3" (click)="retryLoading()">
+      <i class="bi bi-arrow-clockwise me-1"></i>Retry
+    </button>
+  </div>
+
+  <!-- Shows Grid -->
+  <div *ngIf="!loading && !error && shows.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+    <div *ngFor="let show of shows" class="col">
+      <div class="card show-card h-100">
+        <div class="position-relative">
+          <img [src]="sanitizeImageUrl(show.posterUrl || show.imageUrl || show.image) || getImageUrl(null, show.type, show.genre || '', show.title)" 
+               class="card-img-top" 
+               [alt]="show.title" 
+               onerror="this.src='assets/images/placeholder.png'; this.onerror=null;"
+               loading="lazy">
+          <span class="badge position-absolute top-0 end-0 m-2" 
+                [ngClass]="{
+                  'bg-success': show.type === 'Movie',
+                  'bg-info': show.type === 'Theatrical',
+                  'bg-danger': show.type === 'Concert',
+                  'bg-secondary': show.type !== 'Movie' && show.type !== 'Theatrical' && show.type !== 'Concert'
+                }">
+            {{ show.type || 'Show' }}
+          </span>
+          <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);">
+            <div class="d-flex align-items-center">
+              <div class="bms-rating-badge">
+                <i class="bi bi-star-fill me-1"></i>
+                <span>{{show.rating}}</span>
+              </div>
+              <span class="text-white ms-2 small">{{show.voteCount}} votes</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">{{ show.title }}</h5>
+          <div class="mb-1 d-flex align-items-center">
+            <i class="bi bi-calendar3 me-2 text-muted"></i>
+            <span class="show-date">{{ getShowDate(show) }}</span>
+          </div>
+          <div class="mb-1 d-flex align-items-center">
+            <i class="bi bi-geo-alt me-2 text-muted"></i>
+            <span class="show-venue">{{ getShowVenue(show) }}</span>
+          </div>
+          <div class="mb-1" *ngIf="show.status">
+            <app-status-badge
+              [status]="show.status"
+              [metadata]="SHOW_STATUS_METADATA"
+              [showIcon]="true"
+              [size]="'sm'">
+            </app-status-badge>
+          </div>
+          <p *ngIf="show.description" class="card-text flex-grow-1">{{ getTruncatedDescription(show.description) }}</p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="show-price">₹{{ getPrice(show) }}</span>
+            <button class="btn btn-primary" [routerLink]="['/shows', show.id]">
+              <i class="bi bi-ticket-perforated me-1"></i>Book
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Shows Message -->
+  <div *ngIf="!loading && !error && shows.length === 0" class="no-shows-container">
+    <div class="no-shows-icon">
+      <i class="bi bi-search"></i>
+    </div>
+    <p class="no-shows-text">No shows found matching your criteria</p>
+    <button class="btn btn-primary" (click)="resetAllFilters()">
+      <i class="bi bi-arrow-repeat me-2"></i>Clear Filters
+    </button>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && !error && totalPages > 1" class="d-flex justify-content-center mt-5">
+    <nav aria-label="Page navigation">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of getPaginationArray()" [class.active]="page === currentPage">
+          <a class="page-link" href="javascript:void(0)" (click)="goToPage(page)">{{ page }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

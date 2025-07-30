@@ -1,0 +1,406 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-speedometer2 me-2 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0">Organizer Dashboard</h2>
+      </div>
+      <p class="text-muted mb-0">Manage your shows and track performance metrics</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <button class="btn btn-outline-secondary" (click)="refreshData()" [disabled]="isLoading">
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="isLoading"></i>
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+      <a routerLink="/organizer/shows/create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>
+        New Show
+      </a>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Error message -->
+          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ errorMessage }}
+            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">Loading dashboard data...</p>
+            </div>
+          </div>
+          
+          <!-- Dashboard tabs -->
+          <ul class="nav nav-tabs nav-tabs-modern mb-4">
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'overview'" (click)="setActiveTab('overview')">
+                <i class="bi bi-grid me-2"></i>Overview
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'shows'" (click)="setActiveTab('shows')">
+                <i class="bi bi-film me-2"></i>My Shows
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">
+                <i class="bi bi-graph-up me-2"></i>Sales Reports
+              </a>
+            </li>
+          </ul>
+          
+          <!-- Overview Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'overview' && dashboardStats">
+            <div class="row">
+              <!-- Active Shows Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-1">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-film icon-bg"></i>
+                    <h5 class="card-title text-muted">Active Shows</h5>
+                    <div class="display-4 fw-bold text-dark data-update">{{ dashboardStats ? dashboardStats.activeShows || 0 : 0 }}</div>
+                    <div class="text-success small mt-2">
+                      <i class="bi bi-calendar-check me-1"></i>
+                      {{ dashboardStats ? dashboardStats.upcomingShows || 0 : 0 }} upcoming
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Tickets Sold Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-2">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-ticket-perforated icon-bg"></i>
+                    <h5 class="card-title text-muted">Tickets Sold</h5>
+                    <div class="display-4 fw-bold text-dark data-update">{{ dashboardStats ? dashboardStats.totalTicketsSold || 0 : 0 }}</div>
+                    <div class="text-info small mt-2">
+                      <i class="bi bi-people me-1"></i>
+                      Across all shows
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Total Revenue Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-3">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-currency-rupee icon-bg"></i>
+                    <h5 class="card-title text-muted">Total Revenue</h5>
+                    <div class="display-4 fw-bold text-dark data-update">₹{{ dashboardStats && dashboardStats.totalRevenue ? dashboardStats.totalRevenue.toFixed(2) : '0.00' }}</div>
+                    <div class="text-primary small mt-2">
+                      <i class="bi bi-cash-stack me-1"></i>
+                      From all ticket sales
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recent Shows -->
+            <div class="card mt-4 slide-in">
+              <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Shows</h5>
+                <div>
+                  <span *ngIf="webSocketService.isConnected()" class="badge bg-success badge-realtime"></span>
+                  <span *ngIf="!webSocketService.isConnected()" class="badge bg-secondary">Auto-refresh</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Show Name</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Tickets Sold</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let show of shows.slice(0, 5); let i = index" 
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>
+                          <i class="bi bi-film me-2"></i>
+                          {{ show.title || 'Untitled Show' }}
+                        </td>
+                        <td>{{ formatDate(show.date) }}</td>
+                        <td>{{ show.venue || 'No venue' }}</td>
+                        <td>
+                          <span class="badge {{ getShowStatusClass(show.status) }}">
+                            {{ show.status || 'UPCOMING' }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-success">{{ getShowTicketsSold(show) }}</span>
+                        </td>
+                      </tr>
+                      <tr *ngIf="!shows || shows.length === 0">
+                        <td colspan="5" class="text-center">No shows found</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="text-center mt-3" *ngIf="shows && shows.length > 0">
+                  <a routerLink="/organizer/shows" class="btn btn-sm btn-outline-primary">
+                    View All Shows
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Shows Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'shows'">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="mb-0">My Shows</h5>
+              <a routerLink="/organizer/shows/create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Create New Show
+              </a>
+            </div>
+            
+            <!-- Filter Form -->
+            <div class="card mb-4 slide-in">
+              <div class="card-header bg-gradient">
+                <h6 class="mb-0">Filter Shows</h6>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="row g-3">
+                  <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" class="form-select" formControlName="status">
+                      <option *ngFor="let option of showStatusOptions" [value]="option">{{ option }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" formControlName="search" placeholder="Show name...">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="dateFrom" class="form-label">From Date</label>
+                    <input type="date" class="form-control" id="dateFrom" formControlName="dateFrom">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="dateTo" class="form-label">To Date</label>
+                    <input type="date" class="form-control" id="dateTo" formControlName="dateTo">
+                  </div>
+                  <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-secondary me-2" (click)="resetFilters()">
+                      <i class="bi bi-x-circle me-1"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-filter me-1"></i> Apply Filters
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Shows Table -->
+            <div class="card shadow-sm slide-in">
+              <div class="card-header bg-gradient">
+                <h6 class="mb-0">Shows List</h6>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Show Name</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Tickets Sold</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let show of shows; let i = index"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>
+                          <i class="bi bi-film me-2"></i>
+                          {{ show.title || 'Untitled Show' }}
+                        </td>
+                        <td>{{ formatDate(show.date) }}</td>
+                        <td>{{ show.venue || 'No venue' }}</td>
+                        <td>
+                          <span class="badge {{ getShowStatusClass(show.status) }}">
+                            {{ show.status || 'UPCOMING' }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-success">{{ getShowTicketsSold(show) }}</span>
+                        </td>
+                        <td>
+                          <a [routerLink]="['/organizer/shows', show.id]" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <a [routerLink]="['/organizer/shows/edit', show.id]" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr *ngIf="!shows || shows.length === 0">
+                        <td colspan="6" class="text-center">No shows found</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="shows && shows.length > 0">
+                  <div>
+                    <span class="text-muted">Showing {{ shows.length }} of {{ totalShows }} shows</span>
+                  </div>
+                  <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm">
+                      <li class="page-item" [class.disabled]="currentPage === 1">
+                        <a class="page-link" href="javascript:void(0)" (click)="onPageChange(currentPage - 1)">Previous</a>
+                      </li>
+                      <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+                        <a class="page-link" href="javascript:void(0)" (click)="onPageChange(page)">{{ page }}</a>
+                      </li>
+                      <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
+                        <a class="page-link" href="javascript:void(0)" (click)="onPageChange(currentPage + 1)">Next</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sales Reports Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'sales' && salesReport">
+            <div class="row">
+              <!-- Revenue Summary -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-1">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-currency-rupee icon-bg"></i>
+                    <h5 class="card-title text-muted">Total Revenue</h5>
+                    <div class="display-4 fw-bold text-dark">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</div>
+                    <p class="text-muted mt-2">Overall earnings</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Tickets Sold -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-2">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-ticket-perforated icon-bg"></i>
+                    <h5 class="card-title text-muted">Tickets Sold</h5>
+                    <div class="display-4 fw-bold text-dark">{{ salesReport.ticketsSold | number }}</div>
+                    <p class="text-muted mt-2">Total tickets</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Average Ticket Price -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-3">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-tag icon-bg"></i>
+                    <h5 class="card-title text-muted">Avg. Ticket Price</h5>
+                    <div class="display-4 fw-bold text-dark">₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</div>
+                    <p class="text-muted mt-2">Per ticket</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Monthly Revenue Chart -->
+            <div class="card shadow-sm slide-in card-animation-1 mt-4">
+              <div class="card-header bg-gradient">
+                <h5 class="mb-0">Monthly Revenue</h5>
+              </div>
+              <div class="card-body">
+                <div class="chart-container bounce-in">
+                  <!-- For now, we'll use a table until charts are implemented -->
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th class="text-end">Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let monthData of salesReport.revenueByMonth; let i = index"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>{{ monthData.month }}</td>
+                        <td class="text-end">₹{{ monthData.amount | number:'1.2-2' }}</td>
+                      </tr>
+                      <tr *ngIf="!salesReport.revenueByMonth || salesReport.revenueByMonth.length === 0">
+                        <td colspan="2" class="text-center">No revenue data available</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Top Selling Shows -->
+            <div class="card shadow-sm slide-in card-animation-2 mt-4">
+              <div class="card-header bg-gradient">
+                <h5 class="mb-0">Top Selling Shows</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Show Name</th>
+                        <th>Tickets Sold</th>
+                        <th>Revenue</th>
+                        <th>Avg. Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let show of salesReport.topSellingShows; let i = index"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>
+                          <span class="badge bg-primary me-2">{{ i + 1 }}</span>
+                          {{ show.showTitle || 'Untitled Show' }}
+                        </td>
+                        <td>
+                          <span class="badge bg-success">{{ show.ticketsSold }}</span>
+                        </td>
+                        <td>₹{{ (show.ticketsSold * salesReport.averageTicketPrice) | number:'1.2-2' }}</td>
+                        <td>₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</td>
+                      </tr>
+                      <tr *ngIf="!salesReport.topSellingShows || salesReport.topSellingShows.length === 0">
+                        <td colspan="4" class="text-center">No top selling shows data available</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

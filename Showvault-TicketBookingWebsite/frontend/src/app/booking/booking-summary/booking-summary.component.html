@@ -1,0 +1,171 @@
+<div class="card booking-summary-card" *ngIf="summary">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Booking Summary</h5>
+    <div *ngIf="summary.bookingNumber" class="booking-number">
+      <small class="text-muted">Booking #:</small>
+      <span class="ms-1">{{ summary.bookingNumber }}</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Status Bar -->
+    <div class="status-bar mb-4" *ngIf="summary.status || summary.paymentStatus">
+      <div class="d-flex justify-content-between align-items-center">
+        <div *ngIf="summary.status" class="booking-status">
+          <span class="badge" [ngClass]="'bg-' + BOOKING_STATUS_METADATA[summary.status].color">
+            <i class="bi" [ngClass]="'bi-' + BOOKING_STATUS_METADATA[summary.status].icon"></i>
+            {{ BOOKING_STATUS_METADATA[summary.status].displayName }}
+          </span>
+        </div>
+        <div *ngIf="summary.paymentStatus" class="payment-status">
+          <span class="badge" [ngClass]="'bg-' + PAYMENT_STATUS_METADATA[summary.paymentStatus].color">
+            <i class="bi" [ngClass]="'bi-' + PAYMENT_STATUS_METADATA[summary.paymentStatus].icon"></i>
+            {{ PAYMENT_STATUS_METADATA[summary.paymentStatus].displayName }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show Details -->
+    <div class="show-details mb-4">
+      <div class="d-flex">
+        <div class="show-image me-3">
+          <img [src]="summary.show.posterUrl || summary.show.imageUrl || summary.show.image || getImageUrl(null, summary.show.type, '', summary.show.title)" [alt]="summary.show.title" class="img-fluid">
+        </div>
+        <div>
+          <h5 class="show-title">{{ summary.show.title }}</h5>
+          <div class="show-type mb-2">
+            <span class="badge" 
+                  [ngClass]="{
+                    'bg-success': summary.show.type === 'Movie',
+                    'bg-info': summary.show.type === 'Theatrical',
+                    'bg-danger': summary.show.type === 'Concert',
+                    'bg-secondary': summary.show.type !== 'Movie' && summary.show.type !== 'Theatrical' && summary.show.type !== 'Concert'
+                  }">
+              {{ summary.show.type }}
+            </span>
+          </div>
+          <div class="show-schedule">
+            <div><i class="bi bi-calendar3 me-2"></i>{{ formatDate(summary.schedule.date) }}</div>
+            <div><i class="bi bi-clock me-2"></i>{{ formatTime(summary.schedule.time) }}</div>
+            <div><i class="bi bi-geo-alt me-2"></i>{{ summary.schedule.venue }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Seats Details -->
+    <div class="seats-details mb-4">
+      <h6 class="section-title">Selected Seats ({{ summary.seats.count }})</h6>
+      <div class="seats-list">
+        <div class="row">
+          <div class="col-6" *ngFor="let seat of summary.seats.details">
+            <div class="seat-item">
+              <span class="seat-label">{{ seat.row }}{{ seat.seatNumber }}</span>
+              <span class="seat-category" *ngIf="seat.category">
+                {{ seat.category }}
+              </span>
+              <span class="seat-price">₹{{ seat.price.toFixed(0) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-end mt-2" *ngIf="showEditButton">
+        <button class="btn btn-sm btn-outline-secondary" (click)="onEditSeats()">
+          <i class="bi bi-pencil me-1"></i>Edit Seats
+        </button>
+      </div>
+    </div>
+    
+    <!-- Price Details -->
+    <div class="price-details">
+      <h6 class="section-title">Price Details</h6>
+      <div class="price-breakdown">
+        <!-- Base Price -->
+        <div class="price-item">
+          <div class="price-label">
+            <span>Base Price</span>
+            <small class="text-muted d-block">{{ summary.seats.count }} tickets × ₹{{ (summary.pricing.subtotal / summary.seats.count).toFixed(0) }}</small>
+          </div>
+          <span class="price-value">₹{{ summary.pricing.subtotal.toFixed(0) }}</span>
+        </div>
+
+        <!-- Convenience Fee -->
+        <div class="price-item">
+          <div class="price-label">
+            <span>Convenience Fee</span>
+            <i class="bi bi-info-circle ms-1" 
+               placement="right" 
+               [ngbTooltip]="'Includes booking handling and processing charges'"></i>
+          </div>
+          <span class="price-value">₹{{ summary.pricing.fees.toFixed(0) }}</span>
+        </div>
+
+        <!-- GST -->
+        <div class="price-item">
+          <div class="price-label">
+            <span>GST (18%)</span>
+            <small class="text-muted d-block">on fees and charges</small>
+          </div>
+          <span class="price-value">₹{{ summary.pricing.taxes.toFixed(0) }}</span>
+        </div>
+
+        <!-- Discount if applicable -->
+        <div class="price-item text-success" *ngIf="summary.pricing.discount && summary.pricing.discount > 0">
+          <div class="price-label">
+            <span>Discount Applied</span>
+            <small class="text-muted d-block">{{ summary.pricing.discountCode || 'Promo' }}</small>
+          </div>
+          <span class="price-value">-₹{{ (summary.pricing.discount || 0).toFixed(0) }}</span>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="price-total">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Amount Payable</span>
+            <span class="total-amount">₹{{ summary.pricing.total.toFixed(0) }}</span>
+          </div>
+          <small class="text-success d-block mt-1" *ngIf="summary.pricing.savings && summary.pricing.savings > 0">
+            <i class="bi bi-piggy-bank me-1"></i>
+            You saved ₹{{ (summary.pricing.savings || 0).toFixed(0) }} on this booking!
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Status Section -->
+    <div class="payment-details mt-4" *ngIf="summary.paymentStatus">
+      <h6 class="section-title">Payment Information</h6>
+      <div class="payment-info">
+        <div class="payment-method mb-2" *ngIf="summary.paymentMethod">
+          <i class="bi" [ngClass]="getPaymentMethodIcon(summary.paymentMethod)"></i>
+          <span class="ms-2">{{ formatPaymentMethod(summary.paymentMethod) }}</span>
+        </div>
+        <div class="payment-status-details">
+          <span class="badge" [ngClass]="'bg-' + PAYMENT_STATUS_METADATA[summary.paymentStatus].color">
+            <i class="bi" [ngClass]="'bi-' + PAYMENT_STATUS_METADATA[summary.paymentStatus].icon"></i>
+            {{ PAYMENT_STATUS_METADATA[summary.paymentStatus].displayName }}
+          </span>
+          <small class="text-muted d-block mt-2" *ngIf="summary.paymentDate">
+            <i class="bi bi-clock-history me-1"></i>
+            {{ formatDate(summary.paymentDate) }}
+          </small>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Customer Details -->
+    <div class="customer-details mt-4" *ngIf="summary.customer">
+      <h6 class="section-title">Customer Details</h6>
+      <div><strong>Name:</strong> {{ summary.customer.name }}</div>
+      <div><strong>Email:</strong> {{ summary.customer.email }}</div>
+    </div>
+    
+    <!-- Payment Button -->
+    <div class="mt-4" *ngIf="showPaymentButton">
+      <button class="btn btn-primary w-100" [disabled]="isProcessing" (click)="onProceedToPayment()">
+        <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Proceed to Payment
+      </button>
+    </div>
+  </div>
+</div>

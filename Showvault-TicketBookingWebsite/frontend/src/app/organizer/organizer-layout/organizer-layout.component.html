@@ -1,0 +1,18 @@
+<div class="organizer-layout">
+  <!-- Organizer Header -->
+  <app-organizer-header (toggleSidebarEvent)="toggleSidebar()"></app-organizer-header>
+  
+  <div class="organizer-container">
+    <!-- Sidebar -->
+    <aside class="organizer-sidebar" [class.collapsed]="isSidebarCollapsed">
+      <app-organizer-sidebar></app-organizer-sidebar>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="organizer-content" [class.expanded]="isSidebarCollapsed">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

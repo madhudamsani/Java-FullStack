@@ -1,0 +1,512 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Reports</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Report Filters -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Reports</h5>
+          <div class="btn-group">
+            <button type="button" class="btn btn-light" (click)="exportReport('pdf')">
+              <i class="bi bi-file-pdf"></i> PDF
+            </button>
+            <button type="button" class="btn btn-light" (click)="exportReport('csv')">
+              <i class="bi bi-file-spreadsheet"></i> CSV
+            </button>
+            <button type="button" class="btn btn-light" (click)="exportReport('excel')">
+              <i class="bi bi-file-excel"></i> Excel
+            </button>
+            <button type="button" class="btn btn-light" (click)="printReport()">
+              <i class="bi bi-printer"></i> Print
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Report Type Tabs -->
+          <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="activeTab === 'sales'" href="javascript:void(0)" (click)="setActiveTab('sales')">
+                <i class="bi bi-graph-up"></i> Sales Reports
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="activeTab === 'users'" href="javascript:void(0)" (click)="setActiveTab('users')">
+                <i class="bi bi-people"></i> User Analytics
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div class="row mb-4" *ngIf="error">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5 loading-container">
+    <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 loading-text">Loading report data...</p>
+  </div>
+
+  <!-- Sales Report -->
+  <div *ngIf="!isLoading && activeTab === 'sales' && salesReport" class="sales-report">
+    <!-- Sales Summary -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-1">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-currency-rupee icon-bg"></i>
+            <h6 class="text-muted">Total Revenue</h6>
+            <h3 class="mb-0">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</h3>
+            <p class="text-{{ salesReport.revenueTrend === 'increasing' ? 'success' : salesReport.revenueTrend === 'decreasing' ? 'danger' : 'secondary' }} mt-2">
+              <i class="bi {{ salesReport.revenueTrend === 'increasing' ? 'bi-arrow-up' : salesReport.revenueTrend === 'decreasing' ? 'bi-arrow-down' : 'bi-dash' }}"></i>
+              {{ salesReport.revenueTrend | titlecase }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-2">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-ticket-perforated icon-bg"></i>
+            <h6 class="text-muted">Tickets Sold</h6>
+            <h3 class="mb-0">{{ salesReport.ticketsSold | number }}</h3>
+            <p class="text-muted mt-2">Total tickets</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-3">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-tag icon-bg"></i>
+            <h6 class="text-muted">Average Ticket Price</h6>
+            <h3 class="mb-0">₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</h3>
+            <p class="text-muted mt-2">Per ticket</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-4">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-graph-up-arrow icon-bg"></i>
+            <h6 class="text-muted">Conversion Rate</h6>
+            <h3 class="mb-0">{{ salesReport.conversionRate | number:'1.1-1' }}%</h3>
+            <p class="text-muted mt-2">Visitors to buyers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue by Show & Category -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 slide-in card-animation-1">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Revenue by Show</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Show</th>
+                    <th class="text-end">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of salesReport.revenueByShow; let i = index" 
+                      [ngClass]="{'fade-in': true}" 
+                      [style.animation-delay]="i * 0.1 + 's'">
+                    <td>{{ item.showTitle }}</td>
+                    <td class="text-end">₹{{ item.revenue | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <th>Total</th>
+                    <th class="text-end">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 slide-in card-animation-2">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Revenue by Category</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th class="text-end">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of salesReport.revenueByCategory; let i = index" 
+                      [ngClass]="{'fade-in': true}" 
+                      [style.animation-delay]="i * 0.1 + 's'">
+                    <td>{{ item.category }}</td>
+                    <td class="text-end">₹{{ item.revenue | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <th>Total</th>
+                    <th class="text-end">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Revenue & Payment Methods -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 slide-in card-animation-1">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Monthly Revenue</h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <!-- In a real app, this would be a chart component -->
+              <div class="mock-bar-chart">
+                <div *ngFor="let item of salesReport.revenueByMonth; let i = index" 
+                     class="bar-chart-bar" 
+                     [style.height.%]="item.amount / salesReport.maxMonthlyRevenue * 100"
+                     [style.animation-delay]="i * 0.1 + 's'"
+                     [ngClass]="{'bounce-in': true}">
+                  <div class="bar-chart-tooltip">
+                    {{ item.month }}: ₹{{ item.amount | number:'1.2-2' }}
+                  </div>
+                </div>
+              </div>
+              <div class="bar-chart-labels">
+                <span *ngFor="let item of salesReport.revenueByMonth">{{ item.month }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 slide-in card-animation-2">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Revenue by Payment Method</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Payment Method</th>
+                    <th class="text-end">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of salesReport.revenueByPaymentMethod; let i = index"
+                      [ngClass]="{'fade-in': true}" 
+                      [style.animation-delay]="i * 0.1 + 's'">
+                    <td>
+                      <i class="bi {{ 
+                        item.method.toLowerCase().includes('card') ? 'bi-credit-card' : 
+                        item.method.toLowerCase().includes('upi') ? 'bi-phone' : 
+                        item.method.toLowerCase().includes('wallet') ? 'bi-wallet2' : 
+                        item.method.toLowerCase().includes('net') ? 'bi-bank' : 
+                        'bi-cash' }}"></i>
+                      {{ item.method }}
+                    </td>
+                    <td class="text-end">₹{{ item.revenue | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <th>Total</th>
+                    <th class="text-end">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Selling Shows -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm slide-in">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Top Selling Shows</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Show</th>
+                    <th>Organizer</th>
+                    <th class="text-end">Tickets Sold</th>
+                    <th class="text-end">Revenue</th>
+                    <th class="text-end">Avg. Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let show of salesReport.topSellingShows; let i = index" 
+                      [ngClass]="{'fade-in': true}" 
+                      [style.animation-delay]="i * 0.1 + 's'">
+                    <td>
+                      <span class="badge bg-primary me-2">{{ i + 1 }}</span>
+                      {{ show.name }}
+                    </td>
+                    <td>{{ show.organizer }}</td>
+                    <td class="text-end">
+                      <span class="badge bg-success">{{ show.ticketsSold | number }}</span>
+                    </td>
+                    <td class="text-end">₹{{ show.revenue | number:'1.2-2' }}</td>
+                    <td class="text-end">₹{{ show.averagePrice | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Report -->
+  <div *ngIf="!isLoading && activeTab === 'users' && userReport" class="user-report">
+    <!-- User Summary -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-1">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-people icon-bg"></i>
+            <h6 class="text-muted">Total Users</h6>
+            <h3 class="mb-0">{{ userReport.totalUsers | number }}</h3>
+            <p class="text-muted mt-2">Registered users</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-2">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-person-check icon-bg"></i>
+            <h6 class="text-muted">Active Users</h6>
+            <h3 class="mb-0">{{ userReport.activeUsers | number }}</h3>
+            <p class="text-muted mt-2">{{ (userReport.activeUsers / userReport.totalUsers * 100) | number:'1.1-1' }}% of total</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-3">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-person-plus icon-bg"></i>
+            <h6 class="text-muted">New Users (30 days)</h6>
+            <h3 class="mb-0">{{ userReport.newUsers | number }}</h3>
+            <p class="text-muted mt-2">Recent signups</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm bounce-in card-animation-4">
+          <div class="card-body text-center summary-card">
+            <i class="bi bi-arrow-repeat icon-bg"></i>
+            <h6 class="text-muted">Retention Rate</h6>
+            <h3 class="mb-0">{{ userReport.retentionRate | number:'1.1-1' }}%</h3>
+            <p class="text-muted mt-2">User loyalty</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Types & Growth -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 slide-in card-animation-1">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">User Distribution</h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <!-- In a real app, this would be a chart component -->
+              <div class="mock-chart bounce-in">
+                <div class="chart-segment" 
+                     style="width: {{ (userReport.userTypes.regular / (userReport.userTypes.regular + userReport.userTypes.organizer + userReport.userTypes.admin) * 100) }}%; background-color: #0d6efd;">
+                  <i class="bi bi-people-fill me-1"></i> Regular: {{ userReport.userTypes.regular }}
+                </div>
+                <div class="chart-segment" 
+                     style="width: {{ (userReport.userTypes.organizer / (userReport.userTypes.regular + userReport.userTypes.organizer + userReport.userTypes.admin) * 100) }}%; background-color: #20c997;">
+                  <i class="bi bi-person-badge me-1"></i> Organizers: {{ userReport.userTypes.organizer }}
+                </div>
+                <div class="chart-segment" 
+                     style="width: {{ (userReport.userTypes.admin / (userReport.userTypes.regular + userReport.userTypes.organizer + userReport.userTypes.admin) * 100) }}%; background-color: #dc3545;">
+                  <i class="bi bi-shield-lock me-1"></i> Admins: {{ userReport.userTypes.admin }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-responsive mt-4">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>User Type</th>
+                    <th class="text-end">Count</th>
+                    <th class="text-end">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Regular Users</td>
+                    <td class="text-end">{{ userReport.userTypes.regular | number }}</td>
+                    <td class="text-end">{{ (userReport.userTypes.regular / userReport.totalUsers * 100) | number:'1.1-1' }}%</td>
+                  </tr>
+                  <tr>
+                    <td>Organizers</td>
+                    <td class="text-end">{{ userReport.userTypes.organizer | number }}</td>
+                    <td class="text-end">{{ (userReport.userTypes.organizer / userReport.totalUsers * 100) | number:'1.1-1' }}%</td>
+                  </tr>
+                  <tr>
+                    <td>Admins</td>
+                    <td class="text-end">{{ userReport.userTypes.admin | number }}</td>
+                    <td class="text-end">{{ (userReport.userTypes.admin / userReport.totalUsers * 100) | number:'1.1-1' }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">User Growth</h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <!-- In a real app, this would be a line chart component -->
+              <div class="mock-line-chart">
+                <div *ngFor="let month of userReport.growthByMonth" class="line-chart-bar" 
+                     [style.height.%]="month.count / userReport.maxMonthlyUsers * 100">
+                  <div class="line-chart-tooltip">
+                    {{ month.month }}: {{ month.count }} users
+                  </div>
+                </div>
+              </div>
+              <div class="line-chart-labels">
+                <span *ngFor="let month of userReport.growthByMonth">{{ month.month }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Sources & Most Active Users -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Registration Sources</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th class="text-end">Users</th>
+                    <th class="text-end">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let source of userReport && userReport && userReport.registrationSources | keyvalue">
+                    <td>{{ source.key }}</td>
+                    <td class="text-end">{{ source.value | number }}</td>
+                    <td class="text-end">{{ ((source.value / (userReport && userReport && userReport.totalUsers || 1)) * 100) | number:'1.1-1' }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-gradient">
+            <h5 class="mb-0">Most Active Users</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th class="text-end">Bookings</th>
+                    <th>Last Active</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let user of userReport.mostActiveUsers">
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.role }}</td>
+                    <td class="text-end">{{ user.bookings }}</td>
+                    <td>{{ user.lastActive | date:'short' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Performance Report (Placeholder) -->
+  <div *ngIf="!isLoading && activeTab === 'content'" class="content-report">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-bar-chart-line" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">Content Performance Report</h4>
+            <p class="text-muted">This report is currently under development</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,57 @@
+<div class="venue-form-container">
+  <h2>{{ isEditMode ? 'Edit Venue' : 'Create Venue' }}</h2>
+  
+  <form [formGroup]="venueForm" (ngSubmit)="onSubmit()">
+    <div class="mb-3">
+      <label for="name" class="form-label">Venue Name</label>
+      <input type="text" class="form-control" id="name" formControlName="name">
+      <div *ngIf="venueForm.get('name')?.invalid && (venueForm.get('name')?.dirty || venueForm.get('name')?.touched)" class="text-danger">
+        Name is required
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="location" class="form-label">Location</label>
+      <input type="text" class="form-control" id="location" formControlName="location">
+      <div *ngIf="venueForm.get('location')?.invalid && (venueForm.get('location')?.dirty || venueForm.get('location')?.touched)" class="text-danger">
+        Location is required
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="capacity" class="form-label">Total Capacity</label>
+      <input type="number" class="form-control" id="capacity" formControlName="capacity">
+      <div *ngIf="venueForm.get('capacity')?.invalid && (venueForm.get('capacity')?.dirty || venueForm.get('capacity')?.touched)" class="text-danger">
+        Valid capacity is required
+      </div>
+    </div>
+
+    <div class="seat-categories-section">
+      <h4>Seat Categories</h4>
+      <button type="button" class="btn btn-secondary mb-3" (click)="addSeatCategory()">Add Category</button>
+
+      <div class="category-item" *ngFor="let category of seatCategories; let i = index">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Category Type" [(ngModel)]="category.type"
+                   [ngModelOptions]="{standalone: true}">
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" placeholder="Capacity" [(ngModel)]="category.capacity">
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" placeholder="Price" [(ngModel)]="category.price">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-danger" (click)="removeSeatCategory(i)">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" [disabled]="!venueForm.valid">
+      {{ isEditMode ? 'Update Venue' : 'Create Venue' }}
+    </button>
+    <button type="button" class="btn btn-secondary ms-2" routerLink="/venues">Cancel</button>
+  </form>
+</div>

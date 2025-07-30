@@ -1,0 +1,348 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-calendar-week me-2 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0">Show Schedules</h2>
+      </div>
+      <p class="text-muted mb-0">Manage schedules and venues for your show</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <a routerLink="/organizer/shows" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Shows
+      </a>
+      <button class="btn btn-primary" (click)="openScheduleForm()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Add Schedule
+      </button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" (click)="success = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">Loading schedule data...</p>
+            </div>
+          </div>
+          
+          <!-- Show Details -->
+          <div class="card mb-4 slide-in" *ngIf="show">
+            <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-info-circle me-2"></i>
+                <h6 class="mb-0">Show Details</h6>
+              </div>
+              <span class="badge {{ getStatusClass(show.status) }}">{{ show.status || 'UPCOMING' }}</span>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <img [src]="show.image || 'assets/images/placeholder.jpg'" alt="{{ show.title }}" class="img-fluid rounded shadow-sm">
+                </div>
+                <div class="col-md-9">
+                  <h4 class="mb-2">{{ show.title }}</h4>
+                  <p class="text-muted">{{ show.type }}</p>
+                  <p>{{ show.description }}</p>
+                  <div class="row mt-3">
+                    <div class="col-md-4">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-clock me-2 text-primary"></i>
+                        <div>
+                          <small class="text-muted d-block">Duration</small>
+                          <strong>{{ show.duration }} minutes</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-currency-rupee me-2 text-success"></i>
+                        <div>
+                          <small class="text-muted d-block">Base Price</small>
+                          <strong>₹{{ show.price }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-tag me-2 text-info"></i>
+                        <div>
+                          <small class="text-muted d-block">Genre</small>
+                          <strong>{{ show.genre || 'Not specified' }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Schedules List -->
+          <div class="card shadow-sm slide-in">
+            <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-calendar-week me-2"></i>
+                <h6 class="mb-0">Schedules</h6>
+              </div>
+              <div>
+                <span *ngIf="schedules.length > 0" class="badge bg-light text-primary">
+                  <i class="bi bi-calendar-event me-1"></i> {{ schedules.length }} schedules
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- No schedules message -->
+              <div *ngIf="!isLoading && schedules.length === 0" class="text-center py-5">
+                <i class="bi bi-calendar-x" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h4 class="mt-3">No Schedules Found</h4>
+                <p class="text-muted">You haven't added any schedules for this show yet.</p>
+                <button class="btn btn-primary mt-2" (click)="openScheduleForm()">
+                  <i class="bi bi-plus-circle me-2"></i>Add Schedule
+                </button>
+              </div>
+
+              <!-- Schedules grouped by date (BookMyShow style) -->
+              <div *ngIf="!isLoading && schedules.length > 0">
+                <div *ngFor="let date of getUniqueScheduleDates()" class="mb-4">
+                  <div class="schedule-card">
+                    <div class="date-header">
+                      <h6 class="mb-0 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-calendar-event me-2 text-primary"></i>
+                          {{ formatDateTime(date) }}
+                        </div>
+                        <span class="badge bg-primary">{{ getSchedulesForDate(date).length }} shows</span>
+                      </h6>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="schedule-table table mb-0">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Venue</th>
+                            <th>Base Price</th>
+                            <th>Seats</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let schedule of getSchedulesForDate(date); let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.05 + 's'">
+                            <td>
+                              <span class="time-slot-badge">
+                                <i class="bi bi-clock"></i>
+                                {{ schedule.showTime }}
+                              </span>
+                            </td>
+                            <td>
+                              <div class="venue-info">
+                                <i class="bi bi-geo-alt text-muted"></i>
+                                <div>
+                                  <div class="venue-name">{{ schedule.venue.name || 'N/A' }}</div>
+                                  <div class="venue-location">{{ schedule.venue.city || '' }}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span class="price-display">₹{{ schedule.basePrice | number:'1.0-0' }}</span>
+                            </td>
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <div class="seat-progress me-2" *ngIf="schedule.totalSeats && schedule.totalSeats > 0">
+                                  <div class="progress-bar" 
+                                       [style.width]="(((schedule.totalSeats || 0) - (schedule.availableSeats || 0)) / (schedule.totalSeats || 1) * 100) + '%'">
+                                  </div>
+                                </div>
+                                <small class="text-muted">{{ schedule.availableSeats || 0 }}/{{ schedule.totalSeats || 0 }}</small>
+                              </div>
+                            </td>
+                            <td><span class="badge {{ getStatusClass(schedule.status) }}">{{ schedule.status || 'SCHEDULED' }}</span></td>
+                            <td>
+                              <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-primary" (click)="openScheduleForm(schedule)" title="Edit Schedule">
+                                  <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" (click)="configureSeating(schedule)" title="Configure Seating">
+                                  <i class="bi bi-grid"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" (click)="deleteSchedule(schedule)" title="Delete Schedule">
+                                  <i class="bi bi-trash"></i>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Form Modal -->
+  <div class="modal" [class.show]="showForm" [style.display]="showForm ? 'block' : 'none'">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header bg-gradient">
+          <h5 class="modal-title">
+            <i class="bi bi-{{ selectedSchedule ? 'pencil-square' : 'plus-circle' }} me-2"></i>
+            {{ selectedSchedule ? 'Edit Schedule' : 'Add Schedule' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeScheduleForm()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="scheduleForm" (ngSubmit)="onSubmit()">
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label for="showDate" class="form-label">Date</label>
+                <input type="date" class="form-control" id="showDate" formControlName="showDate">
+                <div *ngIf="scheduleForm.get('showDate')?.invalid && scheduleForm.get('showDate')?.touched" class="text-danger small mt-1">
+                  Date is required
+                </div>
+              </div>
+              
+              <!-- Time slots section -->
+              <div class="col-md-12">
+                <label class="form-label">Time Slots</label>
+                
+                
+                <div formArrayName="timeSlots" class="time-slots-container">
+                  <div *ngFor="let timeSlot of timeSlotsArray.controls; let i = index" class="mb-2 d-flex align-items-center">
+                    <input type="time" class="form-control" [formControlName]="i">
+                    <button type="button" class="btn btn-outline-danger ms-2" 
+                            *ngIf="!selectedSchedule && timeSlotsArray.length > 1"
+                            (click)="removeTimeSlot(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <div *ngIf="timeSlotsArray.at(i).invalid && timeSlotsArray.at(i).touched" 
+                         class="text-danger ms-2">
+                      Time is required
+                    </div>
+                  </div>
+                  
+                  <!-- Add time slot button (only for new schedules) -->
+                  <button type="button" class="btn btn-outline-primary btn-sm mt-2" 
+                          *ngIf="!selectedSchedule"
+                          (click)="addTimeSlot()">
+                    <i class="bi bi-plus-circle me-1"></i> Add Another Time
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label for="venue" class="form-label">Venue</label>
+                <select class="form-select" id="venue" formControlName="venue">
+                  <option value="">Select venue</option>
+                  <option *ngFor="let venue of venues" [value]="venue.id">
+                    {{ venue.name }} - {{ venue.address }}, {{ venue.city }} (Capacity: {{ venue.capacity }} seats)
+                  </option>
+                </select>
+                <div *ngIf="scheduleForm.get('venue')?.invalid && scheduleForm.get('venue')?.touched" class="text-danger small mt-1">
+                  Venue is required
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="basePrice" class="form-label">Base Price (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" class="form-control" id="basePrice" formControlName="basePrice" min="0" step="1">
+                </div>
+                <div *ngIf="scheduleForm.get('basePrice')?.invalid && scheduleForm.get('basePrice')?.touched" class="text-danger small mt-1">
+                  Base price is required and must be greater than or equal to 0
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="totalSeats" class="form-label">Total Seats</label>
+                <input type="number" class="form-control" id="totalSeats" formControlName="totalSeats" min="1">
+                <div *ngIf="scheduleForm.get('totalSeats')?.invalid && scheduleForm.get('totalSeats')?.touched" class="text-danger small mt-1">
+                  Total seats is required and must be greater than 0
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation Error Messages -->
+            <div *ngIf="validationMessages.venueConflict" class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              This venue already has a schedule at this date and time. Please select a different venue or time.
+            </div>
+            
+            <div *ngIf="validationMessages.capacityExceeded" class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              The requested number of seats exceeds the venue's capacity. Please reduce the number of seats.
+            </div>
+            
+            <div *ngIf="validationMessages.timeSlotConflict" class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              You have duplicate time slots. Please make sure all time slots are unique.
+            </div>
+            
+            <div *ngIf="validationMessages.timeSlotEmpty" class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              All time slots must have a value. Please fill or remove empty time slots.
+            </div>
+            
+            <div *ngIf="validationMessages.timeSlotBuffer" class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Insufficient time between shows. Each time slot must allow for the show duration plus a 30-minute buffer.
+              <span *ngIf="show && show.duration" class="d-block mt-1 small">
+                For this {{ show.duration }}-minute show, consecutive slots must be at least {{ show.duration + 30 }} minutes apart.
+              </span>
+            </div>
+            
+            <!-- Add Another Checkbox - Only show when creating new schedule -->
+            <div class="form-check mt-3" *ngIf="!selectedSchedule">
+              <input class="form-check-input" type="checkbox" id="createAnother" [(ngModel)]="createAnother" [ngModelOptions]="{standalone: true}">
+              <label class="form-check-label" for="createAnother">
+                Create another schedule after this one
+              </label>
+              <small class="text-muted d-block mt-1">
+                This will keep the form open with current values for quick creation of multiple schedules
+              </small>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+              <button type="button" class="btn btn-outline-secondary me-2" (click)="closeScheduleForm()">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="scheduleForm.invalid || isSubmitting">
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <i class="bi bi-{{ selectedSchedule ? 'save' : 'plus-circle' }} me-1"></i>
+                {{ selectedSchedule ? 'Update' : 'Add' }} Schedule
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" *ngIf="showForm"></div>
+</div>

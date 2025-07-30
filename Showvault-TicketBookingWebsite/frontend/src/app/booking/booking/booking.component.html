@@ -1,0 +1,30 @@
+<div class="booking-container">
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading show details...</p>
+  </div>
+
+  <div *ngIf="!loading && error" class="error-container">
+    <div class="alert alert-danger">
+      {{ error }}
+    </div>
+    <button class="btn btn-primary" (click)="goBack()">Go Back</button>
+  </div>
+
+  <div *ngIf="!loading && !error && show" class="show-details">
+    <h2>{{ show.title }}</h2>
+    <div *ngIf="schedule" class="schedule-info">
+      <p><strong>Date:</strong> {{ schedule.showDate | date }}</p>
+      <p><strong>Time:</strong> {{ schedule.showTime }}</p>
+      <p><strong>Venue:</strong> {{ schedule.venue.name }}</p>
+      <p><strong>Tickets:</strong> {{ quantity }}</p>
+      <p><strong>Price:</strong> {{ schedule.basePrice | currency }}</p>
+    </div>
+    
+    <!-- This component automatically redirects to seat selection, 
+         but we'll add a button just in case -->
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="goBack()">Back</button>
+    </div>
+  </div>
+</div>

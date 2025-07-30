@@ -1,0 +1,89 @@
+.organizer-layout {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.organizer-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 70px; /* Height of the header */
+}
+
+.organizer-sidebar {
+  width: 280px;
+  height: 100%;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: #212529;
+  color: #fff;
+  position: relative;
+  z-index: 1020;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.organizer-sidebar.collapsed {
+  width: 0;
+}
+
+.organizer-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.organizer-content.expanded {
+  margin-left: 0;
+}
+
+.content-wrapper {
+  padding: 1.5rem;
+  min-height: calc(100vh - 70px);
+}
+
+/* Custom scrollbar for organizer content */
+.organizer-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.organizer-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.organizer-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.organizer-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (max-width: 991.98px) {
+  .organizer-sidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .organizer-sidebar {
+    position: fixed;
+    top: 70px; /* Below the header */
+    left: 0;
+    bottom: 0;
+    z-index: 1025;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .organizer-content {
+    margin-left: 0;
+  }
+  
+  .content-wrapper {
+    padding: 1rem;
+  }
+}

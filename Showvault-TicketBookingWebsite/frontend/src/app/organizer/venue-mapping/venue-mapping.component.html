@@ -1,0 +1,227 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/organizer/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a [routerLink]="['/organizer/shows', showId, 'schedules']">Show Schedules</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Venue Mapping</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ success }}
+        <button type="button" class="btn-close" (click)="success = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Show and Schedule Info -->
+  <div class="row mb-4" *ngIf="show && schedule">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">{{ show.title }} - Venue Mapping</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Show:</strong> {{ show.title }}</p>
+              <p><strong>Date & Time:</strong> {{ schedule.showDate | date:'mediumDate' }} at {{ schedule.showTime }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Venue:</strong> {{ schedule.venue.name || 'N/A' }}</p>
+              <p><strong>Base Price:</strong> ₹{{ schedule.basePrice | number:'1.2-2' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading venue mapping...</p>
+  </div>
+
+  <!-- Seat Mapping Tool -->
+  <div *ngIf="!isLoading && seatMap" class="row">
+    <div class="col-md-9">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Seat Map</h5>
+          <div>
+            <button class="btn btn-light me-2" (click)="toggleEditMode()">
+              {{ editMode ? 'Exit Edit Mode' : 'Edit Seats' }}
+            </button>
+            <button class="btn btn-success" (click)="saveSeatMap()" [disabled]="isSaving">
+              <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              Save Map
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Stage Area -->
+          <div class="stage-area mb-4">
+            <div class="stage">STAGE</div>
+          </div>
+
+          <!-- Sections Tabs -->
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item" *ngFor="let section of seatMap.sections">
+              <a class="nav-link" [class.active]="selectedSection === section" href="javascript:void(0)" (click)="selectSection(section)">
+                {{ section.name }}
+              </a>
+            </li>
+          </ul>
+
+          <!-- Seat Map -->
+          <div class="seat-map-container" *ngIf="selectedSection">
+            <div class="section-name mb-3">
+              <h5>{{ selectedSection.name }} - {{ selectedSection.priceCategory }}</h5>
+            </div>
+
+            <div class="seat-map">
+              <div class="row-label" *ngFor="let row of selectedSection.rows">
+                {{ row.rowLabel }}
+              </div>
+
+              <div class="seat-grid">
+                <div class="seat-row" *ngFor="let row of selectedSection.rows">
+                  <div 
+                    *ngFor="let seat of row.seats" 
+                    [class]="getSeatClass(seat)"
+                    (click)="selectSeat(seat)"
+                  >
+                    {{ row.rowLabel }}{{ seat.seatNumber }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seat Legend -->
+            <div class="seat-legend mt-4">
+              <div class="legend-item">
+                <div class="seat available standard"></div>
+                <span>Standard</span>
+              </div>
+              <div class="legend-item">
+                <div class="seat available premium"></div>
+                <span>Premium</span>
+              </div>
+              <div class="legend-item">
+                <div class="seat available vip"></div>
+                <span>VIP</span>
+              </div>
+              <div class="legend-item">
+                <div class="seat sold"></div>
+                <span>Sold</span>
+              </div>
+              <div class="legend-item">
+                <div class="seat reserved"></div>
+                <span>Reserved</span>
+              </div>
+              <div class="legend-item">
+                <div class="seat disabled"></div>
+                <span>Disabled</span>
+              </div>
+              <div class="legend-item" *ngIf="editMode">
+                <div class="seat selected"></div>
+                <span>Selected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editing Tools -->
+    <div class="col-md-3">
+      <div class="card shadow-sm" *ngIf="editMode">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Editing Tools</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Selected Seats:</strong> {{ selectedSeats.length }}</p>
+
+          <div class="mb-3">
+            <label class="form-label">Seat Category</label>
+            <select class="form-select" [(ngModel)]="selectedSeatCategory">
+              <option value="STANDARD">Standard</option>
+              <option value="PREMIUM">Premium</option>
+              <option value="VIP">VIP</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Price Multiplier</label>
+            <select class="form-select" [(ngModel)]="selectedPriceMultiplier">
+              <option [value]="1.0">Standard (1.0x)</option>
+              <option [value]="1.5">Premium (1.5x)</option>
+              <option [value]="2.0">VIP (2.0x)</option>
+              <option [value]="2.5">VIP+ (2.5x)</option>
+            </select>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" (click)="updateSelectedSeats()" [disabled]="selectedSeats.length === 0">
+              Update Selected Seats
+            </button>
+            <button class="btn btn-outline-secondary" (click)="disableSelectedSeats()" [disabled]="selectedSeats.length === 0">
+              Toggle Disabled
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seat Information -->
+      <div class="card shadow-sm mt-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Seat Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <p><strong>Total Seats:</strong> {{ schedule?.totalSeats || 0 }}</p>
+            <p><strong>Available Seats:</strong> {{ schedule?.availableSeats || 0 }}</p>
+          </div>
+
+          <div class="mb-3">
+            <h6>Pricing</h6>
+            <ul class="list-group">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Standard
+                <span>${{ (schedule?.basePrice || 0) * 1.0 | number:'1.2-2' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Premium
+                <span>${{ (schedule?.basePrice || 0) * 1.5 | number:'1.2-2' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                VIP
+                <span>${{ (schedule?.basePrice || 0) * 2.0 | number:'1.2-2' }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-secondary" (click)="goBack()">
+              Back to Schedules
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

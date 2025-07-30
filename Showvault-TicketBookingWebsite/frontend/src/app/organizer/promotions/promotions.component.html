@@ -1,0 +1,345 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center slide-in">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-tags me-3 text-primary fs-3"></i>
+        <h2 class="mb-0 fw-bold">
+          {{ showId ? 'Show Promotions' : 'All Promotions' }}
+        </h2>
+      </div>
+      <p class="text-muted mb-0">
+        {{ showId ? 'Manage discount codes and special offers for this show' : 'Manage all your promotional campaigns across shows' }}
+      </p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end align-items-center">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle me-1"></i> Create Promotion
+      </button>
+    </div>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="row mb-4" *ngIf="successMessage || error">
+    <div class="col-12">
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show slide-in" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show slide-in" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-tags me-2 text-primary"></i>
+            <h6 class="mb-0">Promotions Management</h6>
+          </div>
+        </div>
+        <div class="card-body position-relative">
+          <!-- Filters -->
+          <div class="card mb-4 slide-in card-animation-1">
+            <div class="card-header bg-light">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-funnel-fill me-2 text-primary"></i>
+                <h6 class="mb-0">Filter Promotions</h6>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                  <label for="searchQuery" class="form-label">
+                    <i class="bi bi-search me-1"></i> Search
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchQuery" class="form-control" placeholder="Search promotions..." [(ngModel)]="searchQuery">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="statusFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i> Status Filter
+                  </label>
+                  <select class="form-select" id="statusFilter" [(ngModel)]="statusFilter">
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Spinner -->
+          <div *ngIf="isLoading" class="text-center py-5 fade-in">
+            <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 loading-text">Loading promotions...</p>
+          </div>
+
+          <!-- No Promotions Message -->
+          <div *ngIf="!isLoading && filteredPromotions.length === 0" class="text-center py-5 bounce-in">
+            <div class="empty-state">
+              <i class="bi bi-tag" style="font-size: 4rem;"></i>
+              <h4 class="mt-3">No Promotions Found</h4>
+              <p class="text-muted" *ngIf="statusFilter !== 'all' && promotions.length > 0">No promotions with this status. Try showing all statuses.</p>
+              <p class="text-muted" *ngIf="searchQuery && promotions.length > 0">No promotions match your search. Try a different query.</p>
+              <p class="text-muted" *ngIf="promotions.length === 0">You haven't created any promotions yet.</p>
+              <button class="btn btn-primary btn-lg mt-2" (click)="openCreateModal()">
+                <i class="bi bi-plus-circle me-2"></i>Create Your First Promotion
+              </button>
+            </div>
+          </div>
+
+          <!-- Promotions Table -->
+          <div *ngIf="!isLoading && filteredPromotions.length > 0" class="card slide-in card-animation-2">
+    <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-list-ul me-2 text-white"></i>
+        <h6 class="mb-0 text-white">Promotions List</h6>
+      </div>
+      <div>
+        <span class="badge bg-light text-primary">
+          <i class="bi bi-tag me-1"></i> {{ filteredPromotions.length }} promotions
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Discount</th>
+              <th>Validity</th>
+              <th>Usage</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let promotion of filteredPromotions; let i = index" 
+                [ngClass]="{'fade-in': true}" 
+                [style.animation-delay]="i * 0.1 + 's'">
+              <td>
+                <div class="fw-bold">{{ promotion.name }}</div>
+                <small class="text-muted" *ngIf="promotion.description">{{ promotion.description }}</small>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark promo-code">{{ promotion.code }}</span>
+              </td>
+              <td>
+                <span class="fw-bold text-primary">{{ getDiscountDisplay(promotion) }}</span>
+              </td>
+              <td>
+                <div class="d-flex flex-column">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-calendar-event me-1 text-muted"></i>
+                    <span>{{ getFormattedDate(promotion.startDate) }}</span>
+                  </div>
+                  <div class="d-flex align-items-center mt-1">
+                    <i class="bi bi-calendar-event-fill me-1 text-muted"></i>
+                    <span>{{ getFormattedDate(promotion.endDate) }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex flex-column">
+                  <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar" [ngClass]="getUsageClass(promotion)" 
+                        [style.width.%]="getUsagePercentage(promotion)"></div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">Used</small>
+                    <span class="fw-bold">{{ promotion.currentUses }}/{{ promotion.maxUses }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span [ngClass]="getStatusClass(promotion.status)">
+                  <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+                  {{ promotion.status | titlecase }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-primary" (click)="openEditModal(promotion)" title="Edit Promotion">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deletePromotion(promotion.id!)" title="Delete Promotion">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion Modal -->
+  <div class="modal fade" [class.show]="showPromotionModal" [style.display]="showPromotionModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="promotionModalLabel" [attr.aria-hidden]="!showPromotionModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-white" id="promotionModalLabel">
+            <i class="bi bi-{{ isEditing ? 'pencil-square' : 'plus-circle' }} me-2 text-white"></i>
+            {{ isEditing ? 'Edit Promotion' : 'Create Promotion' }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closePromotionModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="promotionForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">
+                  <i class="bi bi-tag me-1"></i> Promotion Name*
+                </label>
+                <input type="text" class="form-control" id="name" formControlName="name" placeholder="Summer Sale">
+                <div *ngIf="promotionForm.get('name')?.invalid && promotionForm.get('name')?.touched" class="text-danger small mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i> Promotion name is required
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="code" class="form-label">
+                  <i class="bi bi-upc me-1"></i> Promo Code*
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="code" formControlName="code" placeholder="SUMMER20">
+                  <button class="btn btn-outline-secondary" type="button" (click)="regenerateCode()" title="Generate Random Code">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
+                <div *ngIf="promotionForm.get('code')?.invalid && promotionForm.get('code')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="promotionForm.get('code')?.errors?.['required']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Promo code is required
+                  </div>
+                  <div *ngIf="promotionForm.get('code')?.errors?.['pattern']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Code must be 4-10 uppercase letters or numbers
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="discountType" class="form-label">
+                  <i class="bi bi-percent me-1"></i> Discount Type*
+                </label>
+                <select class="form-select" id="discountType" formControlName="discountType">
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FIXED">Fixed Amount (₹)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="discountValue" class="form-label">
+                  <i class="bi bi-currency-rupee me-1"></i> Discount Value*
+                </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="discountValue" formControlName="discountValue" min="1" [max]="promotionForm.get('discountType')?.value === 'PERCENTAGE' ? 100 : 1000">
+                  <span class="input-group-text">{{ promotionForm.get('discountType')?.value === 'PERCENTAGE' ? '%' : '₹' }}</span>
+                </div>
+                <div *ngIf="promotionForm.get('discountValue')?.invalid && promotionForm.get('discountValue')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="promotionForm.get('discountValue')?.errors?.['required']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Discount value is required
+                  </div>
+                  <div *ngIf="promotionForm.get('discountValue')?.errors?.['min']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Value must be at least 1
+                  </div>
+                  <div *ngIf="promotionForm.get('discountValue')?.errors?.['max']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Value must be at most {{ promotionForm.get('discountType')?.value === 'PERCENTAGE' ? '100%' : '₹1000' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="startDate" class="form-label">
+                  <i class="bi bi-calendar-event me-1"></i> Start Date*
+                </label>
+                <input type="date" class="form-control" id="startDate" formControlName="startDate">
+                <div *ngIf="promotionForm.get('startDate')?.invalid && promotionForm.get('startDate')?.touched" class="text-danger small mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i> Start date is required
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="endDate" class="form-label">
+                  <i class="bi bi-calendar-event-fill me-1"></i> End Date*
+                </label>
+                <input type="date" class="form-control" id="endDate" formControlName="endDate">
+                <div *ngIf="promotionForm.get('endDate')?.invalid && promotionForm.get('endDate')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="promotionForm.get('endDate')?.errors?.['required']">
+                    <i class="bi bi-exclamation-circle me-1"></i> End date is required
+                  </div>
+                  <div *ngIf="promotionForm.get('endDate')?.errors?.['dateRange']">
+                    <i class="bi bi-exclamation-circle me-1"></i> End date must be after start date
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="maxUses" class="form-label">
+                  <i class="bi bi-123 me-1"></i> Maximum Uses*
+                </label>
+                <input type="number" class="form-control" id="maxUses" formControlName="maxUses" min="1">
+                <div *ngIf="promotionForm.get('maxUses')?.invalid && promotionForm.get('maxUses')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="promotionForm.get('maxUses')?.errors?.['required']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Maximum uses is required
+                  </div>
+                  <div *ngIf="promotionForm.get('maxUses')?.errors?.['min']">
+                    <i class="bi bi-exclamation-circle me-1"></i> Value must be at least 1
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="status" class="form-label">
+                  <i class="bi bi-toggle-on me-1"></i> Status*
+                </label>
+                <select class="form-select" id="status" formControlName="status">
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">
+                <i class="bi bi-card-text me-1"></i> Description (Optional)
+              </label>
+              <textarea class="form-control" id="description" formControlName="description" rows="3" placeholder="Additional details about this promotion..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="closePromotionModal()">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-primary" [disabled]="promotionForm.invalid" (click)="savePromotion()">
+            <i class="bi bi-{{ isEditing ? 'save' : 'plus-circle' }} me-1"></i>
+            {{ isEditing ? 'Update Promotion' : 'Create Promotion' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showPromotionModal" *ngIf="showPromotionModal"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

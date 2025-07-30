@@ -1,0 +1,343 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Platform Settings</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="row mb-4" *ngIf="success || error">
+    <div class="col-12">
+      <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ success }}
+        <button type="button" class="btn-close" (click)="success = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading platform settings...</p>
+  </div>
+
+  <!-- Settings Tabs -->
+  <div *ngIf="!isLoading && settings" class="row">
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Settings</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <a href="javascript:void(0)" class="list-group-item list-group-item-action" [class.active]="activeTab === 'general'" (click)="setActiveTab('general')">
+              <i class="bi bi-gear me-2"></i> General
+            </a>
+            <a href="javascript:void(0)" class="list-group-item list-group-item-action" [class.active]="activeTab === 'security'" (click)="setActiveTab('security')">
+              <i class="bi bi-shield-lock me-2"></i> Security
+            </a>
+            <a href="javascript:void(0)" class="list-group-item list-group-item-action" [class.active]="activeTab === 'email'" (click)="setActiveTab('email')">
+              <i class="bi bi-envelope me-2"></i> Email
+            </a>
+            <a href="javascript:void(0)" class="list-group-item list-group-item-action" [class.active]="activeTab === 'payment'" (click)="setActiveTab('payment')">
+              <i class="bi bi-credit-card me-2"></i> Payment
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-9">
+      <!-- General Settings -->
+      <div *ngIf="activeTab === 'general'" class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">General Settings</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="generalForm" (ngSubmit)="saveGeneralSettings()">
+            <div class="mb-3">
+              <label for="siteName" class="form-label">Site Name</label>
+              <input type="text" class="form-control" id="siteName" formControlName="siteName">
+              <div *ngIf="generalForm.get('siteName')?.invalid && generalForm.get('siteName')?.touched" class="text-danger">
+                Site name is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="siteDescription" class="form-label">Site Description</label>
+              <textarea class="form-control" id="siteDescription" rows="3" formControlName="siteDescription"></textarea>
+              <div *ngIf="generalForm.get('siteDescription')?.invalid && generalForm.get('siteDescription')?.touched" class="text-danger">
+                Site description is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="contactEmail" class="form-label">Contact Email</label>
+              <input type="email" class="form-control" id="contactEmail" formControlName="contactEmail">
+              <div *ngIf="generalForm.get('contactEmail')?.invalid && generalForm.get('contactEmail')?.touched" class="text-danger">
+                Valid contact email is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="supportPhone" class="form-label">Support Phone</label>
+              <input type="text" class="form-control" id="supportPhone" formControlName="supportPhone">
+              <div *ngIf="generalForm.get('supportPhone')?.invalid && generalForm.get('supportPhone')?.touched" class="text-danger">
+                Support phone is required
+              </div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="maintenanceMode" formControlName="maintenanceMode">
+              <label class="form-check-label" for="maintenanceMode">Maintenance Mode</label>
+              <div class="form-text text-muted">When enabled, the site will display a maintenance message to all users except administrators.</div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary" [disabled]="generalForm.invalid || isSaving">
+                <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Security Settings -->
+      <div *ngIf="activeTab === 'security'" class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Security Settings</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="securityForm" (ngSubmit)="saveSecuritySettings()">
+            <h6 class="mb-3">Password Policy</h6>
+            <div class="mb-3">
+              <label for="minLength" class="form-label">Minimum Password Length</label>
+              <input type="number" class="form-control" id="minLength" formControlName="minLength" min="6">
+              <div *ngIf="securityForm.get('minLength')?.invalid && securityForm.get('minLength')?.touched" class="text-danger">
+                Minimum length must be at least 6 characters
+              </div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="requireUppercase" formControlName="requireUppercase">
+              <label class="form-check-label" for="requireUppercase">Require Uppercase Letters</label>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="requireLowercase" formControlName="requireLowercase">
+              <label class="form-check-label" for="requireLowercase">Require Lowercase Letters</label>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="requireNumbers" formControlName="requireNumbers">
+              <label class="form-check-label" for="requireNumbers">Require Numbers</label>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="requireSpecialChars" formControlName="requireSpecialChars">
+              <label class="form-check-label" for="requireSpecialChars">Require Special Characters</label>
+            </div>
+
+            <hr>
+
+            <div class="mb-3">
+              <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+              <input type="number" class="form-control" id="sessionTimeout" formControlName="sessionTimeout" min="5">
+              <div *ngIf="securityForm.get('sessionTimeout')?.invalid && securityForm.get('sessionTimeout')?.touched" class="text-danger">
+                Session timeout must be at least 5 minutes
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="maxLoginAttempts" class="form-label">Maximum Login Attempts</label>
+              <input type="number" class="form-control" id="maxLoginAttempts" formControlName="maxLoginAttempts" min="1">
+              <div *ngIf="securityForm.get('maxLoginAttempts')?.invalid && securityForm.get('maxLoginAttempts')?.touched" class="text-danger">
+                Maximum login attempts must be at least 1
+              </div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="twoFactorAuth" formControlName="twoFactorAuth">
+              <label class="form-check-label" for="twoFactorAuth">Enable Two-Factor Authentication</label>
+              <div class="form-text text-muted">When enabled, users will have the option to set up two-factor authentication for their accounts.</div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary" [disabled]="securityForm.invalid || isSaving">
+                <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Email Settings -->
+      <div *ngIf="activeTab === 'email'" class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Email Settings</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="emailForm" (ngSubmit)="saveEmailSettings()">
+            <div class="mb-3">
+              <label for="provider" class="form-label">Email Provider</label>
+              <select class="form-select" id="provider" formControlName="provider">
+                <option value="SendGrid">SendGrid</option>
+                <option value="Mailgun">Mailgun</option>
+                <option value="SMTP">SMTP</option>
+                <option value="AWS SES">AWS SES</option>
+              </select>
+              <div *ngIf="emailForm.get('provider')?.invalid && emailForm.get('provider')?.touched" class="text-danger">
+                Email provider is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="fromEmail" class="form-label">From Email</label>
+              <input type="email" class="form-control" id="fromEmail" formControlName="fromEmail">
+              <div *ngIf="emailForm.get('fromEmail')?.invalid && emailForm.get('fromEmail')?.touched" class="text-danger">
+                Valid from email is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="fromName" class="form-label">From Name</label>
+              <input type="text" class="form-control" id="fromName" formControlName="fromName">
+              <div *ngIf="emailForm.get('fromName')?.invalid && emailForm.get('fromName')?.touched" class="text-danger">
+                From name is required
+              </div>
+            </div>
+
+            <hr>
+
+            <h6 class="mb-3">Email Templates</h6>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Template Name</th>
+                    <th>Subject</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let template of settings.email.templates">
+                    <td>{{ template.name }}</td>
+                    <td>{{ template.subject }}</td>
+                    <td>{{ formatDate(template.lastUpdated) }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-envelope"></i> Test
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary" [disabled]="emailForm.invalid || isSaving">
+                <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Payment Settings -->
+      <div *ngIf="activeTab === 'payment'" class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Payment Settings</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="paymentForm" (ngSubmit)="savePaymentSettings()">
+            <div class="mb-3">
+              <label for="currency" class="form-label">Currency</label>
+              <select class="form-select" id="currency" formControlName="currency">
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="CAD">CAD - Canadian Dollar</option>
+                <option value="AUD">AUD - Australian Dollar</option>
+                <option value="JPY">JPY - Japanese Yen</option>
+              </select>
+              <div *ngIf="paymentForm.get('currency')?.invalid && paymentForm.get('currency')?.touched" class="text-danger">
+                Currency is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="taxRate" class="form-label">Tax Rate (%)</label>
+              <input type="number" class="form-control" id="taxRate" formControlName="taxRate" min="0" max="100" step="0.01">
+              <div *ngIf="paymentForm.get('taxRate')?.invalid && paymentForm.get('taxRate')?.touched" class="text-danger">
+                Tax rate must be between 0 and 100
+              </div>
+            </div>
+
+            <hr>
+
+            <h6 class="mb-3">Payment Providers</h6>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th>Test Mode</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let provider of settings.payment.providers">
+                    <td>{{ provider.name }}</td>
+                    <td>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" [checked]="provider.enabled" (change)="togglePaymentProvider(provider)">
+                        <label class="form-check-label">{{ provider.enabled ? 'Enabled' : 'Disabled' }}</label>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" [checked]="provider.testMode" (change)="toggleTestMode(provider)" [disabled]="!provider.enabled">
+                        <label class="form-check-label">{{ provider.testMode ? 'On' : 'Off' }}</label>
+                      </div>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="!provider.enabled">
+                        <i class="bi bi-gear"></i> Configure
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary" [disabled]="paymentForm.invalid || isSaving">
+                <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

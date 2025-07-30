@@ -1,0 +1,353 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-graph-up-arrow me-2 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0">Sales Report</h2>
+      </div>
+      <p class="text-muted mb-0">Analyze your show sales performance and revenue metrics</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <button class="btn btn-outline-secondary" (click)="applyFilters()" [disabled]="isLoading">
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="isLoading"></i>
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-download me-1"></i> Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><button class="dropdown-item" (click)="exportReport('pdf')"><i class="bi bi-file-pdf me-2"></i>PDF</button></li>
+          <li><button class="dropdown-item" (click)="exportReport('csv')"><i class="bi bi-file-spreadsheet me-2"></i>CSV</button></li>
+          <li><button class="dropdown-item" (click)="exportReport('excel')"><i class="bi bi-file-excel me-2"></i>Excel</button></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" (click)="printReport()"><i class="bi bi-printer me-2"></i>Print</button></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" (click)="success = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">Loading sales data...</p>
+            </div>
+          </div>
+
+          <!-- Report Filters -->
+          <div class="card mb-4 slide-in">
+            <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Sales Report Filters</h6>
+              <button type="button" class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </div>
+            <div class="collapse show" id="filterCollapse">
+              <div class="card-body">
+                <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="dateRange" class="form-label">Date Range</label>
+                      <select class="form-select" id="dateRange" formControlName="dateRange">
+                        <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+                      </select>
+                    </div>
+                    
+                    <div class="col-md-4" *ngIf="showCustomRange">
+                      <label for="startDate" class="form-label">Start Date</label>
+                      <input type="date" class="form-control" id="startDate" formControlName="startDate">
+                    </div>
+                    
+                    <div class="col-md-4" *ngIf="showCustomRange">
+                      <label for="endDate" class="form-label">End Date</label>
+                      <input type="date" class="form-control" id="endDate" formControlName="endDate">
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <label for="showId" class="form-label">Show</label>
+                      <select class="form-select" id="showId" formControlName="showId">
+                        <option value="all">All Shows</option>
+                        <option *ngFor="let show of shows" [value]="show.id">{{ show.title }}</option>
+                      </select>
+                    </div>
+                    
+                    <div class="col-md-4 d-flex align-items-end">
+                      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+                        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        <i class="bi bi-funnel me-1"></i> Apply Filters
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Report -->
+          <div *ngIf="!isLoading && salesReport" class="sales-report">
+            <!-- Report Header -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="card shadow-sm slide-in">
+                  <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Sales Summary</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row g-4">
+                      <div class="col-md-3">
+                        <div class="summary-card bounce-in card-animation-1">
+                          <i class="bi bi-currency-rupee icon-bg"></i>
+                          <h6 class="text-muted">Total Revenue</h6>
+                          <div class="display-4 fw-bold text-dark data-update">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="summary-card bounce-in card-animation-2">
+                          <i class="bi bi-ticket-perforated icon-bg"></i>
+                          <h6 class="text-muted">Tickets Sold</h6>
+                          <div class="display-4 fw-bold text-dark data-update">{{ salesReport.ticketsSold | number }}</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="summary-card bounce-in card-animation-3">
+                          <i class="bi bi-tag icon-bg"></i>
+                          <h6 class="text-muted">Average Ticket Price</h6>
+                          <div class="display-4 fw-bold text-dark data-update">₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="summary-card bounce-in card-animation-4">
+                          <i class="bi bi-percent icon-bg"></i>
+                          <h6 class="text-muted">Occupancy Rate</h6>
+                          <div class="display-4 fw-bold text-dark data-update">{{ salesReport.occupancyRate | number:'1.1-1' }}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Revenue by Show & Month -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-1">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Revenue by Show</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Show</th>
+                            <th class="text-end">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of salesReport.revenueByShow; let i = index" 
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>{{ item.showTitle }}</td>
+                            <td class="text-end">₹{{ item.revenue | number:'1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="table-active">
+                            <th>Total</th>
+                            <th class="text-end">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Revenue by Month -->
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-2">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Revenue by Month</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Month</th>
+                            <th class="text-end">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of salesReport.revenueByMonth; let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>{{ item.month }}</td>
+                            <td class="text-end">₹{{ item.amount | number:'1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Revenue by Category & Sales by Day -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-1">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Revenue by Category</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Category</th>
+                            <th class="text-end">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of revenueByCategoryArray; let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>{{ item.category }}</td>
+                            <td class="text-end">₹{{ item.revenue | number:'1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="table-active">
+                            <th>Total</th>
+                            <th class="text-end">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-2">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Sales by Day</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th class="text-end">Sales</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of salesReport.salesByDay; let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>
+                              <i class="bi bi-calendar-event me-2"></i>
+                              {{ item.date | date:'mediumDate' }}
+                            </td>
+                            <td class="text-end">₹{{ item.sales | number:'1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Selling Shows & Venues -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-1">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Top Selling Shows</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Show</th>
+                            <th class="text-end">Tickets Sold</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of salesReport.topSellingShows; let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>
+                              <i class="bi bi-star-fill me-2 text-warning"></i>
+                              {{ item.showTitle }}
+                            </td>
+                            <td class="text-end">{{ item.ticketsSold | number }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card shadow-sm h-100 slide-in card-animation-2">
+                  <div class="card-header bg-gradient">
+                    <h6 class="mb-0">Top Selling Venues</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Venue</th>
+                            <th class="text-end">Tickets Sold</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let item of salesReport.topSellingVenues; let i = index"
+                              [ngClass]="{'fade-in': true}" 
+                              [style.animation-delay]="i * 0.1 + 's'">
+                            <td>
+                              <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+                              {{ item.venueName }}
+                            </td>
+                            <td class="text-end">{{ item.ticketsSold | number }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

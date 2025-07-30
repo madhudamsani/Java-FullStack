@@ -1,0 +1,347 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-speedometer2 me-2 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0">Admin Dashboard</h2>
+      </div>
+      <p class="text-muted mb-0">Comprehensive overview of platform activities and performance</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <button class="btn btn-outline-secondary" (click)="loadDashboardData()" [disabled]="isLoading">
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="isLoading"></i>
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+      <button class="btn btn-primary" routerLink="/admin/settings">
+        <i class="bi bi-gear me-1"></i>
+        Settings
+      </button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">Loading dashboard data...</p>
+            </div>
+          </div>
+          
+          <!-- Dashboard tabs -->
+          <ul class="nav nav-tabs nav-tabs-modern mb-4">
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'overview'" (click)="setActiveTab('overview')">
+                <i class="bi bi-grid me-2"></i>Overview
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'users'" (click)="setActiveTab('users')">
+                <i class="bi bi-people me-2"></i>User Analytics
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">
+                <i class="bi bi-graph-up me-2"></i>Sales Reports
+              </a>
+            </li>
+          </ul>
+          
+          <!-- Overview Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'overview' && dashboardStats">
+            <div class="row">
+              <!-- Total Users Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-1">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-people-fill icon-bg"></i>
+                    <h5 class="card-title text-muted">Total Users</h5>
+                    <div class="display-4 fw-bold text-dark data-update">{{ dashboardStats ? dashboardStats.totalUsers || 0 : 0 }}</div>
+                    <div class="text-success small mt-2">
+                      <i class="bi bi-graph-up-arrow me-1"></i>
+                      {{ dashboardStats ? dashboardStats.newUsers || 0 : 0 }} new this month
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Total Shows Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-2">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-calendar-event icon-bg"></i>
+                    <h5 class="card-title text-muted">Active Shows</h5>
+                    <div class="display-4 fw-bold text-dark data-update">{{ dashboardStats ? dashboardStats.activeShows || 0 : 0 }}</div>
+                    <div class="text-info small mt-2">
+                      <i class="bi bi-calendar-check me-1"></i>
+                      {{ dashboardStats ? dashboardStats.upcomingShows || 0 : 0 }} upcoming
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Total Revenue Card -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-3">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-currency-rupee icon-bg"></i>
+                    <h5 class="card-title text-muted">Total Revenue</h5>
+                    <div class="display-4 fw-bold text-dark data-update">₹{{ dashboardStats && dashboardStats.totalRevenue ? dashboardStats.totalRevenue.toFixed(2) : '0.00' }}</div>
+                    <div class="text-primary small mt-2">
+                      <i class="bi bi-ticket-perforated me-1"></i>
+                      {{ dashboardStats ? dashboardStats.bookingsThisMonth || 0 : 0 }} bookings this month
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recent Activity (Real-time) -->
+            <div class="card mt-4 slide-in">
+              <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Activity</h5>
+                <div>
+                  <span *ngIf="webSocketService.isConnected()" class="badge bg-success badge-realtime">Real-time</span>
+                  <span *ngIf="!webSocketService.isConnected()" class="badge bg-secondary">Auto-refresh</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Activity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let activity of dashboardStats.recentActivity; let i = index" 
+                          [class.new-activity]="i === 0"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>{{ formatDate(activity.timestamp) }}</td>
+                        <td>
+                          <i class="bi bi-person-circle me-2"></i>
+                          {{ activity.user }}
+                        </td>
+                        <td>
+                          <i class="bi {{ 
+                            activity.action.toLowerCase().includes('login') ? 'bi-box-arrow-in-right' : 
+                            activity.action.toLowerCase().includes('book') ? 'bi-ticket-perforated' : 
+                            activity.action.toLowerCase().includes('register') ? 'bi-person-plus' : 
+                            activity.action.toLowerCase().includes('update') ? 'bi-pencil-square' : 
+                            'bi-activity' }} me-2"></i>
+                          {{ activity.action }}
+                        </td>
+                      </tr>
+                      <tr *ngIf="!dashboardStats.recentActivity || dashboardStats.recentActivity.length === 0">
+                        <td colspan="3" class="text-center">No recent activity</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Analytics Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'users' && userReport">
+            <div class="row">
+              <!-- User Types Chart -->
+              <div class="col-md-6 mb-4">
+                <div class="card shadow-sm slide-in card-animation-1">
+                  <div class="card-header bg-gradient">
+                    <h5 class="mb-0">User Distribution</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container bounce-in">
+                      <div *ngIf="!isLoading" style="height: 250px; width: 100%;">
+                        <canvas baseChart
+                          [data]="userDistributionChartData"
+                          [options]="userDistributionChartOptions"
+                          [type]="'pie'">
+                        </canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- User Growth Chart -->
+              <div class="col-md-6 mb-4">
+                <div class="card shadow-sm slide-in card-animation-2">
+                  <div class="card-header bg-gradient">
+                    <h5 class="mb-0">User Growth</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container bounce-in">
+                      <div *ngIf="!isLoading" style="height: 250px; width: 100%;">
+                        <canvas baseChart
+                          [data]="userGrowthChartData"
+                          [options]="userGrowthChartOptions"
+                          [type]="'line'">
+                        </canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Active Users Table -->
+            <div class="card shadow-sm slide-in">
+              <div class="card-header bg-gradient">
+                <h5 class="mb-0">Most Active Users</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Bookings</th>
+                        <th>Last Active</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let user of userReport.mostActiveUsers; let i = index"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>
+                          <i class="bi bi-person-circle me-2"></i>
+                          {{ user.name }}
+                        </td>
+                        <td>{{ user.id ? user.email : 'N/A' }}</td>
+                        <td>
+                          <span class="badge {{ 
+                            user.role.toLowerCase().includes('admin') ? 'bg-danger' : 
+                            user.role.toLowerCase().includes('organizer') ? 'bg-success' : 
+                            'bg-primary' }}">
+                            {{ user.role }}
+                          </span>
+                        </td>
+                        <td>{{ user.bookings }}</td>
+                        <td>{{ formatDate(user.lastActive.toString()) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sales Reports Tab -->
+          <div class="tab-content mt-3" *ngIf="!isLoading && activeTab === 'sales' && salesReport">
+            <div class="row">
+              <!-- Revenue Summary -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-1">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-currency-rupee icon-bg"></i>
+                    <h5 class="card-title text-muted">Total Revenue</h5>
+                    <div class="display-4 fw-bold text-dark">₹{{ salesReport.totalRevenue | number:'1.2-2' }}</div>
+                    <p class="text-muted mt-2">Overall earnings</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Tickets Sold -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-2">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-ticket-perforated icon-bg"></i>
+                    <h5 class="card-title text-muted">Tickets Sold</h5>
+                    <div class="display-4 fw-bold text-dark">{{ salesReport.ticketsSold | number }}</div>
+                    <p class="text-muted mt-2">Total tickets</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Average Ticket Price -->
+              <div class="col-md-4 mb-4">
+                <div class="card shadow-sm bounce-in card-animation-3">
+                  <div class="card-body text-center summary-card">
+                    <i class="bi bi-tag icon-bg"></i>
+                    <h5 class="card-title text-muted">Avg. Ticket Price</h5>
+                    <div class="display-4 fw-bold text-dark">₹{{ salesReport.averageTicketPrice | number:'1.2-2' }}</div>
+                    <p class="text-muted mt-2">Per ticket</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Monthly Revenue Chart -->
+            <div class="card shadow-sm slide-in card-animation-1 mt-4">
+              <div class="card-header bg-gradient">
+                <h5 class="mb-0">Monthly Revenue</h5>
+              </div>
+              <div class="card-body">
+                <div class="chart-container bounce-in">
+                  <div *ngIf="!isLoading" style="height: 250px; width: 100%;">
+                    <canvas baseChart
+                      [data]="revenueChartData"
+                      [options]="revenueChartOptions"
+                      [type]="'bar'">
+                    </canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Top Selling Shows -->
+            <div class="card shadow-sm slide-in card-animation-2 mt-4">
+              <div class="card-header bg-gradient">
+                <h5 class="mb-0">Top Selling Shows</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Show Name</th>
+                        <th>Organizer</th>
+                        <th>Tickets Sold</th>
+                        <th>Revenue</th>
+                        <th>Avg. Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let show of salesReport.topSellingShows; let i = index"
+                          [ngClass]="{'fade-in': true}" 
+                          [style.animation-delay]="i * 0.1 + 's'">
+                        <td>
+                          <span class="badge bg-primary me-2">{{ i + 1 }}</span>
+                          {{ show.name || show.title }}
+                        </td>
+                        <td>{{ show.organizer || 'N/A' }}</td>
+                        <td>
+                          <span class="badge bg-success">{{ show.ticketsSold }}</span>
+                        </td>
+                        <td>₹{{ show.revenue | number:'1.2-2' }}</td>
+                        <td>₹{{ show.averagePrice | number:'1.2-2' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

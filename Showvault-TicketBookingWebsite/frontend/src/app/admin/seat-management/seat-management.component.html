@@ -1,0 +1,786 @@
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-gear-fill me-3 text-primary fs-2"></i>
+          <div>
+            <h2 class="mb-0 fw-bold">Seat Management System</h2>
+            <p class="text-muted mb-0">Monitor and manage venue seating configurations across the platform</p>
+          </div>
+        </div>
+        <button 
+          class="btn btn-success btn-lg"
+          (click)="toggleCreateVenueForm()"
+          [disabled]="loading || creatingVenue">
+          <i class="bi bi-plus-circle me-2"></i>
+          {{ showCreateVenueForm ? 'Cancel' : 'Add New Venue' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Venue Form -->
+  <div class="row mb-4" *ngIf="showCreateVenueForm">
+    <div class="col-12">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Venue</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="venueForm" (ngSubmit)="createVenue()">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="venueName" class="form-label">Venue Name *</label>
+                <input 
+                  type="text" 
+                  id="venueName"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('name')"
+                  formControlName="name"
+                  placeholder="Enter venue name">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+                  {{ getFieldError('name') }}
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="venueAddress" class="form-label">Address *</label>
+                <input 
+                  type="text" 
+                  id="venueAddress"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('address')"
+                  formControlName="address"
+                  placeholder="Enter venue address">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('address')">
+                  {{ getFieldError('address') }}
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <label for="venueCity" class="form-label">City *</label>
+                <input 
+                  type="text" 
+                  id="venueCity"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('city')"
+                  formControlName="city"
+                  placeholder="Enter city">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('city')">
+                  {{ getFieldError('city') }}
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <label for="venueCountry" class="form-label">Country *</label>
+                <input 
+                  type="text" 
+                  id="venueCountry"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('country')"
+                  formControlName="country"
+                  placeholder="Enter country">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('country')">
+                  {{ getFieldError('country') }}
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <label for="venueCapacity" class="form-label">Capacity *</label>
+                <input 
+                  type="number" 
+                  id="venueCapacity"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('capacity')"
+                  formControlName="capacity"
+                  placeholder="Enter capacity"
+                  min="1"
+                  max="100000">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('capacity')">
+                  {{ getFieldError('capacity') }}
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button 
+                    type="submit" 
+                    class="btn btn-success"
+                    [disabled]="venueForm.invalid || creatingVenue">
+                    <span *ngIf="creatingVenue" class="spinner-border spinner-border-sm me-2"></span>
+                    <i *ngIf="!creatingVenue" class="bi bi-check-lg me-2"></i>
+                    {{ creatingVenue ? 'Creating...' : 'Create Venue' }}
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-secondary"
+                    (click)="toggleCreateVenueForm()"
+                    [disabled]="creatingVenue">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <label for="venueImage" class="form-label">Venue Image (Optional)</label>
+                <div class="input-group">
+                  <input 
+                    type="url" 
+                    id="venueImage"
+                    class="form-control"
+                    formControlName="imageUrl"
+                    placeholder="Enter image URL or browse local images">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-secondary" 
+                    (click)="openVenueImageBrowser()"
+                    title="Browse local images">
+                    <i class="bi bi-folder-open"></i> Browse
+                  </button>
+                </div>
+                
+                <!-- Image preview -->
+                <div *ngIf="venueImagePreview" class="mt-2">
+                  <img [src]="venueImagePreview" alt="Venue Preview" class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                  <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="clearVenueImagePreview()">
+                    <i class="bi bi-x"></i> Remove
+                  </button>
+                </div>
+                
+              </div>
+              
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" (click)="clearMessages()"></button>
+  </div>
+
+  <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    {{ success }}
+    <button type="button" class="btn-close" (click)="clearMessages()"></button>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="row mb-4" *ngIf="stats">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>System Statistics</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="stat-card bg-light p-3 rounded">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-building text-primary fs-3 me-3"></i>
+                  <div>
+                    <h4 class="mb-0">{{ stats.totalVenues }}</h4>
+                    <small class="text-muted">Total Venues</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card bg-light p-3 rounded">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-check-circle text-success fs-3 me-3"></i>
+                  <div>
+                    <h4 class="mb-0">{{ stats.venuesWithSeats }}</h4>
+                    <small class="text-muted">Venues with Seats</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card bg-light p-3 rounded position-relative" 
+                   [class.border-warning]="stats.venuesWithoutSeats > 0"
+                   style="cursor: pointer;"
+                   (click)="toggleVenuesWithoutSeatsDetails()"
+                   *ngIf="stats.venuesWithoutSeats > 0">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-circle text-warning fs-3 me-3"></i>
+                  <div>
+                    <h4 class="mb-0">{{ stats.venuesWithoutSeats }}</h4>
+                    <small class="text-muted">Venues without Seats</small>
+                  </div>
+                </div>
+                <small class="text-muted position-absolute bottom-0 end-0 me-2 mb-1">
+                  <i class="bi bi-eye"></i> Click to view details
+                </small>
+              </div>
+              <div class="stat-card bg-light p-3 rounded" *ngIf="stats.venuesWithoutSeats === 0">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-check-circle text-success fs-3 me-3"></i>
+                  <div>
+                    <h4 class="mb-0">{{ stats.venuesWithoutSeats }}</h4>
+                    <small class="text-muted">Venues without Seats</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card bg-light p-3 rounded">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-person-fill text-info fs-3 me-3"></i>
+                  <div>
+                    <h4 class="mb-0">{{ stats.totalSeats | number }}</h4>
+                    <small class="text-muted">Total Seats</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row g-3 mt-2" *ngIf="stats.capacityMismatches > 0 || stats.schedulesExceedingCapacity > 0">
+            <div class="col-md-6">
+              <div class="alert alert-warning mb-0 position-relative" 
+                   style="cursor: pointer;"
+                   (click)="toggleCapacityMismatchDetails()">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>{{ stats.capacityMismatches }}</strong> venues have capacity mismatches
+                <small class="d-block mt-1">
+                  <i class="bi bi-eye"></i> Click to view details
+                </small>
+              </div>
+            </div>
+            <div class="col-md-6" *ngIf="stats.schedulesExceedingCapacity > 0">
+              <div class="alert alert-danger mb-0 position-relative"
+                   style="cursor: pointer;"
+                   (click)="toggleScheduleExcessDetails()">
+                <i class="bi bi-x-circle me-2"></i>
+                <strong>{{ stats.schedulesExceedingCapacity }}</strong> schedules exceed venue capacity
+                <small class="d-block mt-1">
+                  <i class="bi bi-eye"></i> Click to view details
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venues Without Seats Details -->
+  <div class="row mb-4" *ngIf="showVenuesWithoutSeatsDetails && stats?.venuesWithoutSeatsDetails && (stats?.venuesWithoutSeatsDetails?.length || 0) > 0">
+    <div class="col-12">
+      <div class="card border-warning">
+        <div class="card-header bg-warning text-dark">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-exclamation-circle me-2"></i>
+              Venues Without Seats ({{ stats?.venuesWithoutSeatsDetails?.length || 0 }})
+            </h5>
+            <button class="btn btn-sm btn-outline-dark" (click)="toggleVenuesWithoutSeatsDetails()">
+              <i class="bi bi-x"></i> Close
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Venue Name</th>
+                  <th>Location</th>
+                  <th>Capacity</th>
+                  <th>Schedules</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let venue of stats?.venuesWithoutSeatsDetails">
+                  <td>
+                    <strong>{{ venue.venueName }}</strong>
+                    <br>
+                    <small class="text-muted">ID: {{ venue.venueId }}</small>
+                  </td>
+                  <td>
+                    {{ venue.city }}, {{ venue.country }}
+                    <br>
+                    <small class="text-muted">{{ venue.address }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{ venue.capacity }} seats</span>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [class.bg-success]="venue.hasSchedules"
+                          [class.bg-secondary]="!venue.hasSchedules">
+                      {{ venue.scheduleCount }} schedule{{ venue.scheduleCount !== 1 ? 's' : '' }}
+                    </span>
+                    <div *ngIf="venue.hasSchedules" class="mt-1">
+                      <small class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Has active schedules but no seats!
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-primary me-2" 
+                            (click)="selectVenueFromDetails(venue.venueId)"
+                            title="View venue details">
+                      <i class="bi bi-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-success" 
+                            (click)="generateSeats(venue.venueId)"
+                            [disabled]="loading"
+                            title="Generate seats for this venue">
+                      <i class="bi bi-plus-circle"></i> Generate Seats
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capacity Mismatch Details -->
+  <div class="row mb-4" *ngIf="showCapacityMismatchDetails && stats?.venuesWithCapacityMismatchesDetails && (stats?.venuesWithCapacityMismatchesDetails?.length || 0) > 0">
+    <div class="col-12">
+      <div class="card border-warning">
+        <div class="card-header bg-warning text-dark">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Venues with Capacity Mismatches ({{ stats?.venuesWithCapacityMismatchesDetails?.length || 0 }})
+            </h5>
+            <button class="btn btn-sm btn-outline-dark" (click)="toggleCapacityMismatchDetails()">
+              <i class="bi bi-x"></i> Close
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Venue Name</th>
+                  <th>Location</th>
+                  <th>Configured Capacity</th>
+                  <th>Actual Seats</th>
+                  <th>Difference</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let venue of stats?.venuesWithCapacityMismatchesDetails">
+                  <td>
+                    <strong>{{ venue.venueName }}</strong>
+                    <br>
+                    <small class="text-muted">ID: {{ venue.venueId }}</small>
+                  </td>
+                  <td>{{ venue.city }}</td>
+                  <td>
+                    <span class="badge bg-primary">{{ venue.configuredCapacity }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{ venue.actualSeatCount }}</span>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [class.bg-danger]="venue.difference > 0"
+                          [class.bg-warning]="venue.difference < 0">
+                      {{ venue.difference > 0 ? '+' : '' }}{{ venue.difference }}
+                    </span>
+                    <br>
+                    <small class="text-muted">
+                      {{ venue.difference > 0 ? 'Over-configured' : 'Under-configured' }}
+                    </small>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" 
+                            (click)="selectVenueFromDetails(venue.venueId)"
+                            title="View venue details">
+                      <i class="bi bi-eye"></i> View Details
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Excess Details -->
+  <div class="row mb-4" *ngIf="showScheduleExcessDetails && stats?.schedulesExceedingCapacityDetails && (stats?.schedulesExceedingCapacityDetails?.length || 0) > 0">
+    <div class="col-12">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-x-circle me-2"></i>
+              Schedules Exceeding Venue Capacity ({{ stats?.schedulesExceedingCapacityDetails?.length || 0 }})
+            </h5>
+            <button class="btn btn-sm btn-outline-light" (click)="toggleScheduleExcessDetails()">
+              <i class="bi bi-x"></i> Close
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Show</th>
+                  <th>Venue</th>
+                  <th>Show Date</th>
+                  <th>Scheduled Seats</th>
+                  <th>Venue Capacity</th>
+                  <th>Excess</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let schedule of stats?.schedulesExceedingCapacityDetails">
+                  <td>
+                    <strong>{{ schedule.showTitle }}</strong>
+                    <br>
+                    <small class="text-muted">Schedule ID: {{ schedule.scheduleId }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ schedule.venueName }}</strong>
+                    <br>
+                    <small class="text-muted">Venue ID: {{ schedule.venueId }}</small>
+                  </td>
+                  <td>{{ schedule.showDate | date:'medium' }}</td>
+                  <td>
+                    <span class="badge bg-danger">{{ schedule.scheduledSeats }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{ schedule.venueSeatCount }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-danger">+{{ schedule.excess }}</span>
+                    <br>
+                    <small class="text-danger">Over capacity!</small>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" 
+                            (click)="selectVenueFromDetails(schedule.venueId)"
+                            title="View venue details">
+                      <i class="bi bi-eye"></i> View Venue
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Selection -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="bi bi-search me-2"></i>Venue Analysis</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <label for="venueSelect" class="form-label">Select Venue to Analyze</label>
+              <select 
+                id="venueSelect" 
+                class="form-select" 
+                (change)="loadVenueInfo($any($event.target).value)"
+              >
+                <option value="">Choose a venue...</option>
+                <option *ngFor="let venue of venues" [value]="venue.id">
+                  {{ venue.name }} ({{ venue.city }}) - Capacity: {{ venue.capacity }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Details -->
+  <div class="row venue-details-section" *ngIf="selectedVenue">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-building me-2"></i>{{ selectedVenue.venueName }}
+          </h5>
+          <div>
+            <span 
+              class="badge me-2"
+              [class.bg-success]="selectedVenue.capacityMatch"
+              [class.bg-warning]="!selectedVenue.capacityMatch"
+            >
+              {{ selectedVenue.capacityMatch ? 'Capacity Match' : 'Capacity Mismatch' }}
+            </span>
+            <span 
+              class="badge"
+              [class.bg-success]="selectedVenue.hasSeats"
+              [class.bg-danger]="!selectedVenue.hasSeats"
+            >
+              {{ selectedVenue.hasSeats ? 'Has Seats' : 'No Seats' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Basic Info -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="info-item">
+                <label class="text-muted small">Configured Capacity</label>
+                <div class="h4">{{ selectedVenue.configuredCapacity }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-item">
+                <label class="text-muted small">Actual Seat Count</label>
+                <div class="h4">{{ selectedVenue.actualSeatCount }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-item">
+                <label class="text-muted small">Total Schedules</label>
+                <div class="h4">{{ selectedVenue.totalSchedules }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-item">
+                <label class="text-muted small">Actions</label>
+                <div>
+                  <button 
+                    *ngIf="!selectedVenue.hasSeats"
+                    class="btn btn-primary btn-sm"
+                    (click)="generateSeats(selectedVenue.venueId)"
+                    [disabled]="loading"
+                  >
+                    <i class="bi bi-plus-circle me-1"></i>Generate Seats
+                  </button>
+                  <span *ngIf="selectedVenue.hasSeats" class="text-success">
+                    <i class="bi bi-check-circle me-1"></i>Seats Configured
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seat Category Breakdown -->
+          <div class="row mb-4" *ngIf="selectedVenue.seatCategoryBreakdown">
+            <div class="col-12">
+              <h6 class="mb-3">Seat Category Breakdown</h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="category-card bg-warning bg-opacity-10 p-3 rounded">
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-star-fill text-warning fs-4 me-3"></i>
+                      <div>
+                        <h5 class="mb-0">{{ selectedVenue.seatCategoryBreakdown.VIP }}</h5>
+                        <small class="text-muted">VIP Seats</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="category-card bg-info bg-opacity-10 p-3 rounded">
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-gem text-info fs-4 me-3"></i>
+                      <div>
+                        <h5 class="mb-0">{{ selectedVenue.seatCategoryBreakdown.PREMIUM }}</h5>
+                        <small class="text-muted">Premium Seats</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="category-card bg-secondary bg-opacity-10 p-3 rounded">
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-person-fill text-secondary fs-4 me-3"></i>
+                      <div>
+                        <h5 class="mb-0">{{ selectedVenue.seatCategoryBreakdown.STANDARD }}</h5>
+                        <small class="text-muted">Standard Seats</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule Usage -->
+          <div class="row" *ngIf="getScheduleUsageArray().length > 0">
+            <div class="col-12">
+              <h6 class="mb-3">Show Schedule Usage</h6>
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Show Title</th>
+                      <th>Show Date</th>
+                      <th>Total Seats</th>
+                      <th>Available Seats</th>
+                      <th>Used Seats</th>
+                      <th>Utilization</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let schedule of getScheduleUsageArray()">
+                      <td>{{ schedule.showTitle }}</td>
+                      <td>{{ schedule.showDate | date:'mediumDate' }}</td>
+                      <td>{{ schedule.totalSeats }}</td>
+                      <td>{{ schedule.availableSeats }}</td>
+                      <td>{{ schedule.usedSeats }}</td>
+                      <td>
+                        <div class="progress" style="height: 20px;">
+                          <div 
+                            class="progress-bar"
+                            [class.bg-success]="(schedule.usedSeats / schedule.totalSeats) < 0.5"
+                            [class.bg-warning]="(schedule.usedSeats / schedule.totalSeats) >= 0.5 && (schedule.usedSeats / schedule.totalSeats) < 0.8"
+                            [class.bg-danger]="(schedule.usedSeats / schedule.totalSeats) >= 0.8"
+                            [style.width.%]="(schedule.usedSeats / schedule.totalSeats) * 100"
+                          >
+                            {{ ((schedule.usedSeats / schedule.totalSeats) * 100) | number:'1.0-1' }}%
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Schedules Message -->
+          <div class="row" *ngIf="selectedVenue.totalSchedules === 0">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                This venue has no show schedules yet.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading seat management data...</p>
+  </div>
+</div>
+
+<!-- Venue Image Browser Modal -->
+<div class="modal fade" id="venueImageBrowserModal" tabindex="-1" aria-labelledby="venueImageBrowserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="venueImageBrowserModalLabel">
+          <i class="bi bi-images"></i> Select Venue Image
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Folder Navigation & Controls -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb" class="flex-grow-1">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="#" (click)="navigateToFolder('assets'); $event.preventDefault()">assets</a>
+                </li>
+                <li class="breadcrumb-item">
+                  <a href="#" (click)="navigateToFolder('assets/images'); $event.preventDefault()">images</a>
+                </li>
+                <li *ngIf="currentFolder !== 'assets/images'" class="breadcrumb-item active">
+                  {{ getCurrentFolderName() }}
+                </li>
+              </ol>
+            </nav>
+            
+            <!-- Refresh Button -->
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm ms-2" 
+              (click)="refreshImagesList()"
+              [disabled]="refreshingImages"
+              title="Refresh images list">
+              <i class="bi" [class.bi-arrow-clockwise]="!refreshingImages" [class.bi-arrow-repeat]="refreshingImages"></i>
+              <span *ngIf="refreshingImages" class="spinner-border spinner-border-sm ms-1" role="status"></span>
+              {{ refreshingImages ? 'Refreshing...' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loadingImages" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading images...</span>
+          </div>
+          <p class="mt-2 text-muted">Loading images...</p>
+        </div>
+
+        <!-- Folders -->
+        <div *ngIf="!loadingImages && availableFolders.length > 0" class="mb-3">
+          <h6><i class="bi bi-folder"></i> Folders</h6>
+          <div class="row g-2">
+            <div class="col-md-3" *ngFor="let folder of availableFolders">
+              <div class="card folder-card h-100" (click)="navigateToFolder(folder.path)">
+                <div class="card-body text-center p-2">
+                  <i class="bi bi-folder-fill text-warning fs-1"></i>
+                  <p class="card-text small mb-0 mt-1">{{ folder.name }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Images Grid -->
+        <div *ngIf="!loadingImages && availableImages.length > 0">
+          <h6><i class="bi bi-images"></i> Images ({{ availableImages.length }})</h6>
+          <div class="row g-2">
+            <div class="col-md-3" *ngFor="let image of availableImages">
+              <div class="card image-card h-100" (click)="selectVenueImage(image.path)">
+                <img [src]="image.path" [alt]="image.name" class="card-img-top" style="height: 120px; object-fit: cover;">
+                <div class="card-body p-2">
+                  <p class="card-text small mb-1">{{ image.name }}</p>
+                  <small class="text-muted">{{ image.size }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Images Message -->
+        <div *ngIf="!loadingImages && availableImages.length === 0 && availableFolders.length === 0" class="text-center py-4">
+          <i class="bi bi-images text-muted" style="font-size: 3rem;"></i>
+          <p class="text-muted mt-2">No images found in this folder</p>
+          <button type="button" class="btn btn-outline-primary" (click)="refreshImagesList()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

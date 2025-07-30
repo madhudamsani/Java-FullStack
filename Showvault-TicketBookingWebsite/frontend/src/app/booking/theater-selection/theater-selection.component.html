@@ -1,0 +1,300 @@
+<div class="theater-selection">
+
+  <!-- Theater Selection Container -->
+  <div class="theater-selection-container">
+    <!-- Enhanced Show Details Header -->
+    <div class="show-header-enhanced" *ngIf="show">
+      <div class="show-backdrop" [style.background-image]="'url(' + (show.posterUrl || show.imageUrl || show.image || show.poster_url || getImageUrl(null, show.type, show.genre || '', show.title)) + ')'">
+        <div class="backdrop-overlay"></div>
+      </div>
+      
+      <div class="show-content">
+        <div class="show-poster-container">
+          <img class="show-poster-enhanced" 
+               [src]="show.posterUrl || show.imageUrl || show.image || show.poster_url || getImageUrl(null, show.type, show.genre || '', show.title)" 
+               [alt]="show.title">
+          <div class="poster-shadow"></div>
+        </div>
+        
+        <div class="show-details">
+          <div class="show-title-section">
+            <h1 class="show-title">{{ show.title }}</h1>
+            <div class="show-subtitle" *ngIf="show.category">{{ show.category }}</div>
+          </div>
+          
+          <div class="show-meta-enhanced">
+            <div class="meta-row">
+              <span class="type-badge" [ngClass]="{
+                'type-movie': show.type === 'Movie',
+                'type-theater': show.type === 'Theatrical',
+                'type-concert': show.type === 'Concert',
+                'type-event': show.type === 'Event',
+                'type-other': show.type === 'Other'
+              }">
+                <i class="bi" [ngClass]="{
+                  'bi-film': show.type === 'Movie',
+                  'bi-mask': show.type === 'Theatrical',
+                  'bi-music-note': show.type === 'Concert',
+                  'bi-calendar-event': show.type === 'Event',
+                  'bi-star': show.type === 'Other'
+                }"></i>
+                {{ show.type }}
+              </span>
+              
+              <span class="rating-badge" *ngIf="show.rating">
+                <i class="bi bi-star-fill"></i>
+                {{ show.rating }}
+              </span>
+              
+              <span class="status-badge" [ngClass]="'status-' + show.status.toLowerCase()">
+                {{ show.status }}
+              </span>
+            </div>
+            
+            <div class="meta-row">
+              <span class="duration-info" *ngIf="show.duration">
+                <i class="bi bi-clock"></i>
+                {{ show.duration }} mins
+              </span>
+              
+              <span class="genre-info" *ngIf="show.genre">
+                <i class="bi bi-tag"></i>
+                {{ show.genre }}
+              </span>
+              
+              <span class="language-info" *ngIf="show.language">
+                <i class="bi bi-translate"></i>
+                {{ show.language }}
+              </span>
+            </div>
+            
+            <div class="meta-row" *ngIf="show.createdAt">
+              <span class="release-date">
+                <i class="bi bi-calendar-event"></i>
+                Created: {{ show.createdAt | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="show-description" *ngIf="show.description">
+            <p class="description-text" [class.expanded]="descriptionExpanded">
+              {{ show.description }}
+            </p>
+            <button class="btn-expand" 
+                    *ngIf="show.description && show.description.length > 150"
+                    (click)="descriptionExpanded = !descriptionExpanded">
+              {{ descriptionExpanded ? 'Show Less' : 'Read More' }}
+            </button>
+          </div>
+          
+          <div class="show-stats" *ngIf="venues.length > 0">
+            <div class="stat-item">
+              <span class="stat-number">{{ venues.length }}</span>
+              <span class="stat-label">Theaters</span>
+            </div>
+            <div class="stat-item" *ngIf="availableDates.length > 0">
+              <span class="stat-number">{{ availableDates.length }}</span>
+              <span class="stat-label">Days</span>
+            </div>
+            <div class="stat-item" *ngIf="getTotalShows() > 0">
+              <span class="stat-number">{{ getTotalShows() }}</span>
+              <span class="stat-label">Shows</span>
+            </div>
+          </div>
+          
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-spinner" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
+
+    <!-- Main Content -->
+    <div class="main-content" *ngIf="!loading && !error">
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <div class="filters-header">
+          <h3>Filters</h3>
+          <button class="btn btn-link" (click)="filterOptions = {}">Clear All</button>
+        </div>
+
+        <!-- Location Filter -->
+        <div class="filter-group">
+          <label>Location</label>
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Enter location" 
+                   [(ngModel)]="filterOptions.location">
+            <button class="btn btn-outline-primary" (click)="getUserLocation()">
+              <i class="bi bi-geo-alt"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Distance Filter -->
+        <div class="filter-group" *ngIf="userLocation">
+          <label>Distance (km)</label>
+          <input type="range" class="form-range" min="1" max="50" step="1"
+                 [(ngModel)]="filterOptions.distance" (ngModelChange)="applyFiltersAndSort()">
+          <span class="range-value">{{ filterOptions.distance || 0 }} km</span>
+        </div>
+
+        <!-- Show Time Filter -->
+        <div class="filter-group">
+          <label>Show Time</label>
+          <div class="btn-group w-100">
+            <button class="btn" [class.btn-primary]="filterOptions.showTime === 'morning'"
+                    (click)="filterOptions.showTime = 'morning'; applyFiltersAndSort()">
+              Morning
+            </button>
+            <button class="btn" [class.btn-primary]="filterOptions.showTime === 'afternoon'"
+                    (click)="filterOptions.showTime = 'afternoon'; applyFiltersAndSort()">
+              Afternoon
+            </button>
+            <button class="btn" [class.btn-primary]="filterOptions.showTime === 'evening'"
+                    (click)="filterOptions.showTime = 'evening'; applyFiltersAndSort()">
+              Evening
+            </button>
+          </div>
+        </div>
+
+        <!-- Price Range Filter -->
+        <div class="filter-group">
+          <label>Price Range</label>
+          <div class="price-range">
+            <input type="number" class="form-control" placeholder="Min"
+                   [(ngModel)]="filterOptions.priceRange!.min" 
+                   (ngModelChange)="applyFiltersAndSort()">
+            <span>to</span>
+            <input type="number" class="form-control" placeholder="Max"
+                   [(ngModel)]="filterOptions.priceRange!.max"
+                   (ngModelChange)="applyFiltersAndSort()">
+          </div>
+        </div>
+
+        <!-- Amenities Filter -->
+        <div class="filter-group">
+          <label>Amenities</label>
+          <div class="amenities-list">
+            <div class="form-check" *ngFor="let amenity of availableAmenities">
+              <input class="form-check-input" type="checkbox"
+                     [checked]="filterOptions.amenities?.includes(amenity)"
+                     (change)="toggleAmenity(amenity)">
+              <label class="form-check-label">{{ amenity }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="results-section">
+        <!-- Sort Controls -->
+        <div class="sort-controls">
+          <div class="btn-group">
+            <button class="btn" [class.btn-primary]="sortBy === 'distance'"
+                    (click)="sortBy = 'distance'; applyFiltersAndSort()">
+              Distance
+            </button>
+            <button class="btn" [class.btn-primary]="sortBy === 'price'"
+                    (click)="sortBy = 'price'; applyFiltersAndSort()">
+              Price
+            </button>
+            <button class="btn" [class.btn-primary]="sortBy === 'rating'"
+                    (click)="sortBy = 'rating'; applyFiltersAndSort()">
+              Rating
+            </button>
+          </div>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="date-selection">
+          <div class="date-scroll">
+            <button *ngFor="let date of availableDates" 
+                    class="date-button" 
+                    [class.active]="selectedDate === date"
+                    (click)="selectDate(date)">
+              <span class="day">{{ formatShortDate(date) }}</span>
+              <span class="date">{{ formatDate(date) }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Theaters List -->
+        <div class="theaters-list" *ngIf="venues.length > 0">
+          <div class="theater-card" *ngFor="let venue of venues"
+               [class.selected]="selectedVenue?.id === venue.id"
+               (click)="selectVenue(venue)">
+            <div class="theater-image">
+              <img [src]="venue.imageUrl" [alt]="venue.name">
+            </div>
+            <div class="theater-info">
+              <h4>{{ venue.name }}</h4>
+              <p class="address">{{ venue.address }}</p>
+              <div class="meta-info">
+                <span class="distance" *ngIf="venue.distance">
+                  {{ venue.distance | number:'1.0-1' }} km
+                </span>
+                <span class="rating" *ngIf="venue.averageRating">
+                  <i class="bi bi-star-fill"></i>
+                  {{ venue.averageRating | number:'1.0-1' }}
+                </span>
+              </div>
+              <div class="amenities" *ngIf="venue.amenities?.length">
+                <span class="badge bg-secondary me-1" *ngFor="let amenity of venue.amenities">
+                  {{ amenity }}
+                </span>
+              </div>
+            </div>
+            <div class="show-times" *ngIf="selectedDate">
+              <div class="time-slots">
+                <button *ngFor="let schedule of getSchedulesForVenueAndDate(venue.id!, selectedDate)"
+                        class="time-slot"
+                        [class.active]="selectedSchedule?.id === schedule.id"
+                        [class.sold-out]="getScheduleAvailableSeats(schedule) === 0"
+                        [class.loading]="getScheduleAvailableSeats(schedule) === -1"
+                        [disabled]="getScheduleAvailableSeats(schedule) <= 0"
+                        (click)="$event.stopPropagation(); selectSchedule(schedule)">
+                  <span class="time">{{ schedule.showTime }}</span>
+                  <span class="seats">
+                    <ng-container *ngIf="getScheduleAvailableSeats(schedule) >= 0; else loadingSeats">
+                      {{ getScheduleAvailableSeats(schedule) }} seats
+                    </ng-container>
+                    <ng-template #loadingSeats>
+                      <small><i class="bi bi-arrow-repeat spinning"></i> Loading...</small>
+                    </ng-template>
+                  </span>
+                  <span class="price" *ngIf="getScheduleAvailableSeats(schedule) >= 0">₹{{ schedule.basePrice }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div class="no-results" *ngIf="venues.length === 0">
+          <i class="bi bi-emoji-frown"></i>
+          <p>No theaters found matching your criteria</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="btn btn-secondary" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-primary" 
+              [disabled]="!selectedSchedule"
+              (click)="proceedToSeatSelection()">
+        Continue to Seat Selection <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

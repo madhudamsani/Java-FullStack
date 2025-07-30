@@ -1,0 +1,154 @@
+<div class="d-flex flex-column min-vh-100">
+  <!-- Navigation Bar - Hidden for admin and organizer routes -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm" *ngIf="!isAdminRoute">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" routerLink="/">
+        <i class="bi bi-ticket-perforated-fill me-2"></i>
+        <span class="fw-bold">ShowVault</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/shows" routerLinkActive="active" (click)="checkLoginBeforeNavigate($event, '/shows')">Shows</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/venues" routerLinkActive="active">Theatres</a>
+          </li>
+        </ul>
+        
+
+        <!-- Not logged in -->
+        <ul class="navbar-nav ms-auto" *ngIf="!isLoggedIn()">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/login" routerLinkActive="active">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-danger text-white ms-2 px-3" routerLink="/register" routerLinkActive="active">Register</a>
+          </li>
+        </ul>
+        
+        <!-- Logged in - All users -->
+        <ul class="navbar-nav ms-auto" *ngIf="isLoggedIn()">
+          <!-- Notification Bell -->
+          <li class="nav-item d-flex align-items-center me-2" *ngIf="userRole === 'user' || userRole === 'organizer' || userRole === 'admin'">
+            <app-notification-bell></app-notification-bell>
+          </li>
+          <!-- User role links -->
+          <li class="nav-item" *ngIf="userRole === 'user' || userRole === 'organizer' || userRole === 'admin'">
+            <a class="nav-link" routerLink="/user/profile" routerLinkActive="active">
+              <i class="bi bi-person me-1"></i> My Profile
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="userRole === 'user'">
+            <a class="nav-link" routerLink="/user/bookings" routerLinkActive="active">
+              <i class="bi bi-ticket-perforated me-1"></i> My Bookings
+            </a>
+          </li>
+          
+          <!-- Organizer role links -->
+          <li class="nav-item" *ngIf="userRole === 'organizer'">
+            <a class="nav-link" routerLink="/organizer/dashboard" routerLinkActive="active">
+              <i class="bi bi-speedometer2 me-1"></i> Organizer Dashboard
+            </a>
+          </li>
+          
+          <!-- Admin role links -->
+          <li class="nav-item" *ngIf="userRole === 'admin'">
+            <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active">
+              <i class="bi bi-gear me-1"></i> Admin Dashboard
+            </a>
+          </li>
+          
+          <!-- Logout -->
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" (click)="logout()">
+              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow-1">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-white py-3 mt-4">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4 mb-3 mb-lg-0">
+          <h5 class="text-uppercase mb-3">ShowVault</h5>
+          <p class="mb-3">Your one-stop destination for booking movies, concerts, theater shows, and events. Experience entertainment like never before.</p>
+          <div class="d-flex">
+            <a href="#" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3 mb-md-0">
+          <h5 class="text-uppercase mb-3">Quick Links</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a routerLink="/" class="text-white text-decoration-none"><i class="bi bi-house me-2"></i>Home</a></li>
+            <li class="mb-2"><a routerLink="/shows" class="text-white text-decoration-none" (click)="checkLoginBeforeNavigate($event, '/shows')"><i class="bi bi-ticket-perforated me-2"></i>Shows</a></li>
+            <li class="mb-2"><a routerLink="/login" class="text-white text-decoration-none"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a></li>
+            <li class="mb-2"><a routerLink="/register" class="text-white text-decoration-none"><i class="bi bi-person-plus me-2"></i>Register</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3 mb-md-0">
+          <h5 class="text-uppercase mb-3">Categories</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="#" class="text-white text-decoration-none" (click)="checkLoginBeforeNavigate($event, '/shows?category=movies')"><i class="bi bi-film me-2"></i>Movies</a></li>
+            <li class="mb-2"><a href="#" class="text-white text-decoration-none" (click)="checkLoginBeforeNavigate($event, '/shows?category=concerts')"><i class="bi bi-music-note-beamed me-2"></i>Concerts</a></li>
+
+            <li class="mb-2"><a href="#" class="text-white text-decoration-none" (click)="checkLoginBeforeNavigate($event, '/shows?category=events')"><i class="bi bi-calendar-event me-2"></i>Events</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4 col-md-4">
+          <h5 class="text-uppercase mb-3">Contact Us</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> showVault Entertainments, Hyderabad, Telangana</li>
+            <li class="mb-2"><i class="bi bi-envelope me-2"></i> info@showvault.com</li>
+            <li class="mb-2"><i class="bi bi-telephone me-2"></i> +91 9992299922</li>
+            
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Copyright -->
+  <div class="bg-primary text-white py-3">
+    <div class="container text-center">
+      <p class="mb-0">© 2023 ShowVault - All Rights Reserved</p>
+    </div>
+  </div>
+  
+  <!-- Login Required Modal -->
+  <div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginRequiredModalLabel">Login Required</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Please login to access this feature.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a routerLink="/login" class="btn btn-primary">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

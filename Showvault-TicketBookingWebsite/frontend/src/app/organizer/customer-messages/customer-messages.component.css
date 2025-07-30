@@ -1,0 +1,38 @@
+.message-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.message-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.message-item:hover {
+  background-color: #f8f9fa;
+}
+
+.message-item.unread {
+  border-left-color: #0d6efd;
+  background-color: #f8f9fa;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-meta {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.message-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.message-content {
+  white-space: pre-line;
+}

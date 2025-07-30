@@ -1,0 +1,104 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">My Booking History</h3>
+        </div>
+        <div class="card-body">
+          <!-- Success message -->
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+          
+          
+          
+          <!-- Error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Loading spinner -->
+          <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading your bookings...</p>
+          </div>
+          
+          <!-- No bookings message -->
+          <div *ngIf="!isLoading && bookings.length === 0" class="text-center py-5">
+            <i class="bi bi-ticket-perforated" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">No Bookings Found</h4>
+            <p class="text-muted">You haven't made any bookings yet.</p>
+            <a routerLink="/shows" class="btn btn-primary mt-2">Browse Shows</a>
+          </div>
+          
+          <!-- Bookings table -->
+          <div *ngIf="!isLoading && bookings.length > 0" class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Show</th>
+                  <th>Date & Time</th>
+                  <th>Seats</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let booking of bookings" 
+                    class="booking-row tooltip-row" 
+                    [title]="getShowStatusTooltip(booking)">
+                  <td>{{ booking.id || 'N/A' }}</td>
+                  <td>{{ booking.showName || booking.showSchedule?.show?.title || booking.show?.title || 'N/A' }}</td>
+                  <td>{{ booking.showDate ? (booking.showDate | date:'medium') : (booking.showSchedule?.showDate | date:'medium') || 'N/A' }}</td>
+                  <td>{{ booking.seats?.length || booking.seatBookings?.length || 0 }}</td>
+                  <td>₹{{ booking.totalAmount ? booking.totalAmount.toFixed(2) : '0.00' }}</td>
+                  <td>
+                    <span [ngClass]="getStatusClass(booking.status)">
+                      {{ getStatusDisplayName(booking.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <button 
+                        class="btn btn-sm btn-outline-primary" 
+                        (click)="booking.id && downloadTicket(booking.id)"
+                        [disabled]="!booking.id || !canDownloadTicket(booking) || isDownloadingTicket(booking.id)"
+                        title="Download Ticket">
+                        <i class="bi bi-download" *ngIf="!isDownloadingTicket(booking.id)"></i>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" *ngIf="isDownloadingTicket(booking.id)"></span>
+                        <span class="visually-hidden" *ngIf="isDownloadingTicket(booking.id)">Loading...</span>
+                      </button>
+                      <button 
+                        class="btn btn-sm btn-outline-danger" 
+                        (click)="booking.id && cancelBooking(booking.id)"
+                        [disabled]="!booking.id || !canCancel(booking) || isCancellingBooking(booking.id)"
+                        title="Cancel Booking">
+                        <i class="bi bi-x-circle" *ngIf="!isCancellingBooking(booking.id)"></i>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" *ngIf="isCancellingBooking(booking.id)"></span>
+                        <span class="visually-hidden" *ngIf="isCancellingBooking(booking.id)">Loading...</span>
+                      </button>
+                      <button 
+                        class="btn btn-sm btn-outline-info" 
+                        (click)="booking.id && viewBookingDetails(booking.id)"
+                        [disabled]="!booking.id"
+                        title="View Details">
+                        <i class="bi bi-eye-fill"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

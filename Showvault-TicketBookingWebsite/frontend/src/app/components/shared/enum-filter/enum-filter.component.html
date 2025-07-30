@@ -1,0 +1,87 @@
+<div class="enum-filter mb-3">
+  <!-- Filter label -->
+  <label *ngIf="label" class="form-label">{{ label }}</label>
+  
+  <!-- Desktop view: badges or dropdown -->
+  <div class="filter-options d-none d-md-flex flex-wrap gap-2" [class.badge-view]="showAsBadges">
+    <!-- "All" option -->
+    <div *ngIf="includeAll" 
+         class="filter-option cursor-pointer" 
+         [class.selected]="selectedValue === null"
+         [class.badge]="showAsBadges"
+         [class.bg-secondary]="showAsBadges && selectedValue === null"
+         [class.text-white]="showAsBadges && selectedValue === null"
+         [class.btn]="!showAsBadges"
+         [class.btn-outline-secondary]="!showAsBadges && selectedValue !== null"
+         [class.btn-secondary]="!showAsBadges && selectedValue === null"
+         (click)="onFilterChange(null)">
+      {{ allText }}
+    </div>
+    
+    <!-- Enum options -->
+    <div *ngFor="let value of enumValues" 
+         class="filter-option cursor-pointer" 
+         [class.selected]="isSelected(value)"
+         [class.badge]="showAsBadges"
+         [class.bg-secondary]="showAsBadges && !isSelected(value)"
+         [class.text-white]="showAsBadges && !isSelected(value)"
+         [class.bg-primary]="showAsBadges && isSelected(value)"
+         [class.btn]="!showAsBadges"
+         [class.btn-outline-secondary]="!showAsBadges && !isSelected(value)"
+         [class.btn-primary]="!showAsBadges && isSelected(value)"
+         (click)="onFilterChange(value)">
+      
+      <!-- Icon -->
+      <i *ngIf="showIcons && getIcon(value)" class="bi bi-{{ getIcon(value) }} me-1"></i>
+      
+      <!-- Display name -->
+      <span class="display-name">{{ getDisplayName(value) }}</span>
+      
+      <!-- Count -->
+      <span *ngIf="showCounts && getCount(value) > 0" class="ms-1">({{ getCount(value) }})</span>
+    </div>
+  </div>
+  
+  <!-- Mobile view: dropdown -->
+  <div class="filter-dropdown d-md-none">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" 
+              (click)="toggleDropdown()" 
+              aria-expanded="false">
+        <span *ngIf="selectedValue === null">{{ allText }}</span>
+        <span *ngIf="selectedValue !== null">
+          <i *ngIf="showIcons && getIcon(selectedValue)" class="bi bi-{{ getIcon(selectedValue) }} me-1"></i>
+          {{ getDisplayName(selectedValue) }}
+        </span>
+      </button>
+      
+      <ul class="dropdown-menu w-100" [class.show]="isOpen">
+        <!-- "All" option -->
+        <li *ngIf="includeAll">
+          <a class="dropdown-item" 
+             [class.active]="selectedValue === null"
+             (click)="onFilterChange(null)">
+            {{ allText }}
+          </a>
+        </li>
+        
+        <!-- Enum options -->
+        <li *ngFor="let value of enumValues">
+          <a class="dropdown-item" 
+             [class.active]="isSelected(value)"
+             (click)="onFilterChange(value)">
+            
+            <!-- Icon -->
+            <i *ngIf="showIcons && getIcon(value)" class="bi bi-{{ getIcon(value) }} me-1"></i>
+            
+            <!-- Display name -->
+            <span class="display-name">{{ getDisplayName(value) }}</span>
+            
+            <!-- Count -->
+            <span *ngIf="showCounts && getCount(value) > 0" class="ms-1">({{ getCount(value) }})</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

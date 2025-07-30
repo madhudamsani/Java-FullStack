@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2025-06-08T08:56:27.029Z",
+  "version": "1.0.0",
+  "totalScanned": 9,
+  "directories": {
+    "assets/images": [
+      {
+        "name": "app-mockup.png",
+        "path": "assets/images/app-mockup.png",
+        "size": "58.1 KB",
+        "type": "file",
+        "mimeType": "image/png",
+        "lastModified": "2025-05-24T08:26:59.674Z"
+      },
+      {
+        "name": "chaava.jpg",
+        "path": "assets/images/chaava.jpg",
+        "size": "31.3 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-06-04T12:44:33.463Z"
+      },
+      {
+        "name": "hariharaveeramallu.jpg",
+        "path": "assets/images/hariharaveeramallu.jpg",
+        "size": "15.8 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-06-04T12:09:41.090Z"
+      },
+      {
+        "name": "paradise.webp",
+        "path": "assets/images/paradise.webp",
+        "size": "19 KB",
+        "type": "file",
+        "mimeType": "image/webp",
+        "lastModified": "2025-06-07T16:15:55.362Z"
+      },
+      {
+        "name": "placeholder-movie.jpg",
+        "path": "assets/images/placeholder-movie.jpg",
+        "size": "33.3 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-05-24T08:18:00.636Z"
+      },
+      {
+        "name": "placeholder-venue.jpg",
+        "path": "assets/images/placeholder-venue.jpg",
+        "size": "33.3 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-05-24T08:18:00.636Z"
+      },
+      {
+        "name": "pushpa2.jpg",
+        "path": "assets/images/pushpa2.jpg",
+        "size": "11.8 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-06-04T13:18:15.591Z"
+      },
+      {
+        "name": "rajasaab.jpg",
+        "path": "assets/images/rajasaab.jpg",
+        "size": "21.3 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-06-04T12:27:47.622Z"
+      },
+      {
+        "name": "sandhya.jpg",
+        "path": "assets/images/sandhya.jpg",
+        "size": "22.4 KB",
+        "type": "file",
+        "mimeType": "image/jpeg",
+        "lastModified": "2025-06-04T14:31:11.023Z"
+      }
+    ]
+  }
+}

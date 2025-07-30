@@ -1,0 +1,638 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center slide-in">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-{{ isViewMode ? 'eye' : (isEditMode ? 'pencil-square' : 'plus-circle') }} me-3 stat-icon text-primary fs-3"></i>
+        <h2 class="mb-0 fw-bold">{{ isViewMode ? 'View Show' : (isEditMode ? 'Edit Show' : 'Create New Show') }}</h2>
+      </div>
+      <p class="text-muted mb-0">{{ isViewMode ? 'View the details of your show' : (isEditMode ? 'Update the details of your existing show' : 'Fill in the details to create a new show') }}</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end gap-2">
+      <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Shows
+      </button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-{{ isViewMode ? 'eye' : (isEditMode ? 'pencil-square' : 'plus-circle') }} me-2 text-primary"></i>
+            <h6 class="mb-0">{{ isViewMode ? 'View Show' : (isEditMode ? 'Edit Show' : 'Create New Show') }}</h6>
+          </div>
+        </div>
+        <div class="card-body position-relative">
+          <!-- Error message -->
+          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show slide-in" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {{ errorMessage }}
+            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+          </div>
+          
+          <!-- Form validation error message -->
+          <div *ngIf="error" class="alert alert-danger alert-dismissible fade show slide-in" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {{ error }}
+            <button type="button" class="btn-close" (click)="error = ''"></button>
+          </div>
+          
+          <!-- Success message -->
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show slide-in" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            {{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+          
+          <!-- Loading state -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0 loading-text">{{ isEditMode ? 'Loading show data...' : 'Preparing form...' }}</p>
+            </div>
+          </div>
+
+          <form [formGroup]="showForm" (ngSubmit)="onSubmit()" class="needs-validation">
+            
+            <!-- Update Mode Selection (Only visible in edit mode) -->
+            <div *ngIf="isEditMode && !isViewMode" class="card mb-4 slide-in">
+              <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-gear me-2 text-primary"></i>
+                  <h6 class="mb-0">Update Options</h6>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">What would you like to update?</label>
+                  <div class="d-flex flex-wrap gap-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="updateMode" id="updateModeAll" 
+                             [value]="'all'" [(ngModel)]="updateMode" [ngModelOptions]="{standalone: true}"
+                             (change)="setUpdateMode('all')">
+                      <label class="form-check-label" for="updateModeAll">
+                        <i class="bi bi-arrows-fullscreen me-1"></i>
+                        All Information (Show Details & Schedules)
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="updateMode" id="updateModeDetailsOnly" 
+                             [value]="'details-only'" [(ngModel)]="updateMode" [ngModelOptions]="{standalone: true}"
+                             (change)="setUpdateMode('details-only')">
+                      <label class="form-check-label" for="updateModeDetailsOnly">
+                        <i class="bi bi-card-text me-1"></i>
+                        Show Details Only (Won't affect schedules)
+                      </label>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span *ngIf="updateMode === 'details-only'">Only title, description, poster, trailer, etc. will be updated. Your existing schedules won't be affected.</span>
+                    <span *ngIf="updateMode === 'all'">Both show details and schedule information will be updated.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Show Information -->
+            <div class="card mb-4 slide-in card-animation-1">
+              <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-info-circle me-2 text-primary"></i>
+                  <h6 class="mb-0">Show Information</h6>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <!-- Title -->
+                  <div class="col-12 form-section">
+                    <label for="title" class="form-label">
+                      <i class="bi bi-type"></i> Show Title
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="title"
+                      formControlName="title"
+                      placeholder="Enter show title"
+                      [class.is-invalid]="isFieldInvalid('title')"
+                    >
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
+                      {{ getErrorMessage('title') }}
+                    </div>
+                  </div>
+
+                  <!-- Type and Genre -->
+                  <div class="col-md-4 form-section">
+                    <label for="type" class="form-label">
+                      <i class="bi bi-collection"></i> Show Type
+                    </label>
+                    <select
+                      class="form-select"
+                      id="type"
+                      formControlName="type"
+                      [class.is-invalid]="isFieldInvalid('type')"
+                    >
+                      <option value="">Select type</option>
+                      <option *ngFor="let type of showTypes" [value]="type">{{ type }}</option>
+                    </select>
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('type')">
+                      {{ getErrorMessage('type') }}
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 form-section">
+                    <label for="genre" class="form-label">
+                      <i class="bi bi-tags"></i> Genre
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="genre"
+                      formControlName="genre"
+                      placeholder="e.g., Action, Drama, Comedy"
+                    >
+                  </div>
+
+                  <div class="col-md-4 form-section">
+                    <label for="language" class="form-label">
+                      <i class="bi bi-translate"></i> Language
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="language"
+                      formControlName="language"
+                      placeholder="e.g., English, Hindi"
+                    >
+                  </div>
+
+                  <!-- Duration and Status -->
+                  <div class="col-md-6 form-section">
+                    <label for="duration" class="form-label">
+                      <i class="bi bi-clock"></i> Duration (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="duration"
+                      formControlName="duration"
+                      min="1"
+                      [class.is-invalid]="isFieldInvalid('duration')"
+                    >
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('duration')">
+                      {{ getErrorMessage('duration') }}
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 form-section">
+                    <label for="status" class="form-label">
+                      <i class="bi bi-flag"></i> Status
+                    </label>
+                    <select
+                      class="form-select"
+                      id="status"
+                      formControlName="status"
+                    >
+                      <option value="UPCOMING">Upcoming</option>
+                      <option value="ONGOING">Ongoing</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <!-- Media URLs -->
+                  <div class="col-md-6 form-section">
+                    <label for="posterUrl" class="form-label">
+                      <i class="bi bi-image"></i> Poster URL
+                    </label>
+                    <div class="input-group">
+                      <input
+                        type="url"
+                        class="form-control"
+                        id="posterUrl"
+                        formControlName="posterUrl"
+                        placeholder="https://example.com/poster.jpg or assets/images/poster.jpg"
+                        [class.is-invalid]="isFieldInvalid('posterUrl')"
+                      >
+                      <button 
+                        type="button" 
+                        class="btn btn-outline-secondary" 
+                        (click)="openImageBrowser()"
+                        title="Browse local images">
+                        <i class="bi bi-folder-open"></i> Browse
+                      </button>
+                    </div>
+                    
+                    <!-- Image preview -->
+                    <div *ngIf="imagePreview" class="mt-2">
+                      <img [src]="imagePreview" alt="Preview" class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                      <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="clearImagePreview()">
+                        <i class="bi bi-x"></i> Remove
+                      </button>
+                    </div>
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('posterUrl')">
+                      {{ getErrorMessage('posterUrl') }}
+                    </div>
+                    <div class="form-text">
+                      <i class="bi bi-info-circle me-1"></i>
+                      URL to the show poster image. Supported formats: {{ getSupportedImageFormats() }}
+                      <br>
+                     
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 form-section">
+                    <label for="trailerUrl" class="form-label">
+                      <i class="bi bi-film"></i> Trailer URL
+                    </label>
+                    <input
+                      type="url"
+                      class="form-control"
+                      id="trailerUrl"
+                      formControlName="trailerUrl"
+                      placeholder="https://youtube.com/watch?v=example"
+                    >
+                    <div class="form-text">URL to the show trailer video</div>
+                  </div>
+
+                  <!-- Description -->
+                  <div class="col-12 form-section">
+                    <label for="description" class="form-label">
+                      <i class="bi bi-card-text"></i> Description
+                    </label>
+                    <textarea
+                      class="form-control"
+                      id="description"
+                      formControlName="description"
+                      rows="4"
+                      placeholder="Provide a detailed description of the show"
+                      [class.is-invalid]="isFieldInvalid('description')"
+                    ></textarea>
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+                      {{ getErrorMessage('description') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Schedule & Venue -->
+            <div class="card mb-4 slide-in card-animation-2" [class.disabled-section]="isEditMode && updateMode === 'details-only'">
+              <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-calendar-event me-2 text-primary"></i>
+                  <h6 class="mb-0">Schedule & Venue</h6>
+                  
+                  <div *ngIf="isEditMode && updateMode === 'details-only'" class="ms-auto badge bg-warning text-dark">
+                    <i class="bi bi-lock me-1"></i> Not Included in Update
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <!-- Message when in details-only mode -->
+                <div *ngIf="isEditMode && updateMode === 'details-only'" class="alert alert-info mb-3">
+                  <i class="bi bi-info-circle-fill me-2"></i>
+                  Schedule and venue information will not be modified in "Show Details Only" update mode.
+                  <a href="javascript:void(0)" (click)="setUpdateMode('all')" class="alert-link">
+                    <i class="bi bi-arrows-fullscreen me-1"></i>
+                    Switch to "All Information" mode
+                  </a> to edit schedules.
+                </div>
+                <div class="row g-3">
+                  <!-- Venue -->
+                  <div class="col-12 form-section">
+                    <label for="venue" class="form-label">
+                      <i class="bi bi-building"></i> Venue
+                    </label>
+                    <select
+                      class="form-select"
+                      id="venue"
+                      formControlName="venue"
+                      [class.is-invalid]="isFieldInvalid('venue')"
+                    >
+                      <option value="">Select venue</option>
+                      <option *ngFor="let venue of venues" [value]="venue.id">
+                        {{ venue.name }} - {{ venue.address }}, {{ venue.city }} (Capacity: {{ venue.capacity }} seats)
+                      </option>
+                    </select>
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('venue')">
+                      {{ getErrorMessage('venue') }}
+                    </div>
+                    <div class="form-text">
+                      <i class="bi bi-info-circle me-1"></i>
+                      <strong>Multiple Venues:</strong> After creating this show, click the <span class="badge bg-info text-dark"><i class="bi bi-calendar-week"></i> Schedules</span> button in Shows Management to add more venues and dates.
+                    </div>
+                  </div>
+
+                  <!-- Date and Time -->
+                  <div class="col-md-6 form-section">
+                    <label for="date" class="form-label">
+                      <i class="bi bi-calendar"></i> Date
+                    </label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="date"
+                      formControlName="date"
+                      [class.is-invalid]="isFieldInvalid('date')"
+                    >
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('date')">
+                      {{ getErrorMessage('date') }}
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 form-section">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <label for="time" class="form-label">
+                        <i class="bi bi-clock"></i> Time
+                      </label>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="multipleTimeSlotsSwitch" 
+                               [checked]="enableMultipleTimeSlots" (change)="toggleMultipleTimeSlots()">
+                        <label class="form-check-label small" for="multipleTimeSlotsSwitch">Multiple Time Slots</label>
+                      </div>
+                    </div>
+                    
+                    <!-- Single time input (shown when multiple time slots are disabled) -->
+                    <div *ngIf="!enableMultipleTimeSlots">
+                      <input
+                        type="time"
+                        class="form-control"
+                        id="time"
+                        formControlName="time"
+                        [class.is-invalid]="isFieldInvalid('time')"
+                      >
+                      <div class="invalid-feedback" *ngIf="isFieldInvalid('time')">
+                        {{ getErrorMessage('time') }}
+                      </div>
+                    </div>
+                    
+                    <!-- Multiple time slots (shown when enabled) -->
+                    <div *ngIf="enableMultipleTimeSlots" class="mt-2">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">Time Slots</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" (click)="addTimeSlot()">
+                          <i class="bi bi-plus-circle me-1"></i>Add Time Slot
+                        </button>
+                      </div>
+                      
+                      <div class="time-slots-container" formArrayName="timeSlots">
+                        <div *ngFor="let timeSlot of timeSlots.controls; let i = index" 
+                             [formGroupName]="i" 
+                             class="time-slot-input-group mb-2">
+                          <div class="d-flex align-items-center">
+                            <div class="flex-grow-1 me-2">
+                              <div class="input-group input-group-sm" [class.is-invalid]="hasTimeSlotConflict(i)">
+                                <span class="input-group-text">{{ i + 1 }}</span>
+                                <input type="time" class="form-control" formControlName="showTime" 
+                                       (blur)="validateAllTimeSlots()" (change)="validateAllTimeSlots()">
+                                <button type="button" 
+                                        class="btn btn-outline-primary" 
+                                        (click)="suggestNonConflictingTime(i)"
+                                        *ngIf="hasTimeSlotConflict(i)"
+                                        title="Suggest non-conflicting time">
+                                  <i class="bi bi-magic"></i>
+                                </button>
+                              </div>
+                              <div *ngIf="timeSlot.get('showTime')?.invalid && timeSlot.get('showTime')?.touched" 
+                                   class="text-danger small mt-1">
+                                Time is required
+                              </div>
+                              <div *ngIf="hasTimeSlotConflict(i)" 
+                                   class="text-danger small mt-1">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                This time conflicts with another show. Minimum gap required: {{ getMinimumGapText() }}
+                              </div>
+                            </div>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    (click)="removeTimeSlot(i)"
+                                    [disabled]="timeSlots.length <= 1"
+                                    title="Remove time slot">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div *ngIf="showForm.get('duration')?.value && timeSlots.length > 1" class="alert alert-info mt-2 mb-0 py-2 small">
+                          <i class="bi bi-info-circle-fill me-1"></i>
+                          Shows require a minimum gap of {{ getMinimumGapText() }} between time slots.
+                        </div>
+                      </div>
+                      
+                      <div *ngIf="timeSlots.length === 0" class="text-muted small">
+                        No time slots added yet. Click "Add Time Slot" to add one.
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Price and Seats -->
+                  <div class="col-md-6 form-section">
+                    <label for="price" class="form-label">
+                      <i class="bi bi-currency-rupee"></i> Base Price (₹)
+                    </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="price"
+                      formControlName="price"
+                      min="0"
+                      step="0.01"
+                      [class.is-invalid]="isFieldInvalid('price')"
+                    >
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('price')">
+                      {{ getErrorMessage('price') }}
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 form-section">
+                    <label for="totalSeats" class="form-label">
+                      <i class="bi bi-person-fill"></i> Total Seats
+                    </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="totalSeats"
+                      formControlName="totalSeats"
+                      min="1"
+                      [max]="getSelectedVenueCapacity() > 0 ? getSelectedVenueCapacity() : 1000"
+                      [class.is-invalid]="isFieldInvalid('totalSeats')"
+                    >
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('totalSeats')">
+                      {{ getErrorMessage('totalSeats') }}
+                    </div>
+                    <div class="form-text">
+                      <i class="bi bi-info-circle me-1"></i>
+                      <span *ngIf="getSelectedVenueCapacity() > 0; else noCapacityInfo">
+                        Selected venue capacity: <strong>{{ getSelectedVenueCapacity() }}</strong> seats
+                        <span *ngIf="showForm.get('totalSeats')?.value > getSelectedVenueCapacity()" class="text-danger">
+                          <br><i class="bi bi-exclamation-triangle me-1"></i>
+                          Cannot exceed venue capacity
+                        </span>
+                      </span>
+                      <ng-template #noCapacityInfo>
+                        <span class="text-info">
+                          Venue seats will be automatically generated based on your specified total seats.
+                        </span>
+                      </ng-template>
+                    </div>
+                  </div>
+                </div>
+                
+
+              </div>
+            </div>
+
+
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-end mb-4 slide-in card-animation-3">
+              <button type="button" class="btn btn-outline-secondary me-3" (click)="onCancel()">
+                <i class="bi bi-arrow-left me-1"></i> Back to Shows
+              </button>
+              
+              <!-- Show Edit button in view mode -->
+              <button *ngIf="isViewMode && show?.id" type="button" class="btn btn-outline-primary me-3" 
+                      [routerLink]="['/organizer/shows/edit', show?.id]">
+                <i class="bi bi-pencil-square me-1"></i> Edit Show
+              </button>
+              
+              <!-- Show Schedule button in view mode -->
+              <button *ngIf="isViewMode && show?.id" type="button" class="btn btn-outline-info me-3" 
+                      [routerLink]="['/organizer/shows', show?.id, 'schedules']">
+                <i class="bi bi-calendar-week me-1"></i> Manage Schedules
+              </button>
+              
+              <!-- Show Performance button in view mode -->
+              <button *ngIf="isViewMode && show?.id" type="button" class="btn btn-outline-success me-3" 
+                      [routerLink]="['/organizer/shows', show?.id, 'performance']">
+                <i class="bi bi-graph-up me-1"></i> View Performance
+              </button>
+              
+              <!-- Submit button for create/edit modes -->
+              <button *ngIf="!isViewMode" type="submit" class="btn btn-primary" [disabled]="showForm.invalid || isLoading || (enableMultipleTimeSlots && timeSlotErrors.size > 0)">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <i class="bi bi-{{ isEditMode ? 'save' : 'plus-circle' }} me-1"></i> {{ isEditMode ? 'Update' : 'Create' }} Show
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Browser Modal -->
+<div class="modal fade" id="imageBrowserModal" tabindex="-1" aria-labelledby="imageBrowserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageBrowserModalLabel">
+          <i class="bi bi-images"></i> Select Image
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Folder Navigation & Controls -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb" class="flex-grow-1">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="#" (click)="navigateToFolder('assets'); $event.preventDefault()">assets</a>
+                </li>
+                <li class="breadcrumb-item">
+                  <a href="#" (click)="navigateToFolder('assets/images'); $event.preventDefault()">images</a>
+                </li>
+                <li *ngIf="currentFolder !== 'assets/images'" class="breadcrumb-item active">
+                  {{ getCurrentFolderName() }}
+                </li>
+              </ol>
+            </nav>
+            
+            <!-- Refresh Button -->
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm ms-2" 
+              (click)="refreshImagesList()"
+              [disabled]="refreshingImages"
+              title="Refresh images list">
+              <i class="bi" [class.bi-arrow-clockwise]="!refreshingImages" [class.bi-arrow-repeat]="refreshingImages"></i>
+              <span *ngIf="refreshingImages" class="spinner-border spinner-border-sm ms-1" role="status"></span>
+              {{ refreshingImages ? 'Refreshing...' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle"></i> {{ successMessage }}
+          <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
+        </div>
+        
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
+          <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loadingImages" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading images...</span>
+          </div>
+          <p class="mt-2">Loading images...</p>
+        </div>
+
+        <!-- Image Grid -->
+        <div *ngIf="!loadingImages" class="row g-3">
+          <!-- Folders -->
+          <div *ngFor="let folder of availableFolders" class="col-md-3 col-sm-4 col-6">
+            <div class="card h-100 folder-card" (click)="navigateToFolder(folder.path)">
+              <div class="card-body text-center">
+                <i class="bi bi-folder-fill text-warning fs-1"></i>
+                <p class="card-text small mt-2">{{ folder.name }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Images -->
+          <div *ngFor="let image of availableImages" class="col-md-3 col-sm-4 col-6">
+            <div class="card h-100 image-card" 
+                 [class.selected]="selectedImage === image.path"
+                 (click)="selectImage(image.path)">
+              <img [src]="image.path" class="card-img-top" [alt]="image.name" 
+                   style="height: 120px; object-fit: cover;">
+              <div class="card-body p-2">
+                <p class="card-text small text-truncate" [title]="image.name">{{ image.name }}</p>
+                <small class="text-muted">{{ image.size }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- No images message -->
+          <div *ngIf="availableImages.length === 0 && availableFolders.length === 0" class="col-12">
+            <div class="text-center py-4">
+              <i class="bi bi-images text-muted fs-1"></i>
+              <p class="text-muted mt-2">No images found in this folder</p>
+              <p class="text-muted small">Add images to the assets/images folder to see them here</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" 
+                [disabled]="!selectedImage" 
+                (click)="useSelectedImage()"
+                data-bs-dismiss="modal">
+          <i class="bi bi-check"></i> Use Selected Image
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

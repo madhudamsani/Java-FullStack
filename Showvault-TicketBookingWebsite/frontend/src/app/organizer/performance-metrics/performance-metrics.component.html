@@ -1,0 +1,140 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-graph-up-arrow me-2 text-primary fs-3"></i>
+        <h2 class="mb-0">Performance Metrics</h2>
+      </div>
+      <p class="text-muted mb-0">Analyze the performance of your show</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end align-items-center">
+      <button class="btn btn-outline-primary" (click)="loadPerformanceData()" [disabled]="isLoading">
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="isLoading"></i>
+        {{ isLoading ? 'Refreshing...' : 'Refresh Data' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+  
+  <!-- No Data Message -->
+  <div *ngIf="!isLoading && !analytics && !error" class="alert alert-info" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    No performance data is available for this show yet. Data will appear once tickets are sold or the show has started.
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-border text-primary pulse" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 mb-0 loading-text">Loading performance metrics...</p>
+    </div>
+  </div>
+
+  <!-- Performance Metrics Content -->
+  <div *ngIf="!isLoading && analytics" class="row">
+    <!-- Show Title Bar -->
+    <div class="col-12 mb-4">
+      <div class="card shadow-sm bounce-in card-animation-1">
+        <div class="card-body text-center summary-card">
+          <i class="bi bi-film icon-bg"></i>
+          <div class="display-4 fw-bold text-dark data-update">
+            Current Show: {{ analytics.showTitle }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Key Metrics Cards -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm bounce-in card-animation-1">
+        <div class="card-body text-center summary-card">
+          <i class="bi bi-currency-rupee icon-bg"></i>
+          <h5 class="card-title text-muted">Total Revenue</h5>
+          <div class="display-4 fw-bold text-dark data-update">{{ formatCurrency(analytics.totalRevenue) }}</div>
+          <div class="text-primary small mt-2">
+            <i class="bi bi-cash-stack me-1"></i>
+            From all ticket sales
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm bounce-in card-animation-2">
+        <div class="card-body text-center summary-card">
+          <i class="bi bi-ticket-perforated icon-bg"></i>
+          <h5 class="card-title text-muted">Total Tickets Sold</h5>
+          <div class="display-4 fw-bold text-dark data-update">{{ analytics.totalTicketsSold }}</div>
+          <div class="text-info small mt-2">
+            <i class="bi bi-people me-1"></i>
+            For this show
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm bounce-in card-animation-3">
+        <div class="card-body text-center summary-card">
+          <i class="bi bi-percent icon-bg"></i>
+          <h5 class="card-title text-muted">Occupancy Rate</h5>
+          <div class="display-4 fw-bold text-dark data-update" [ngClass]="getOccupancyRateClass()">
+            {{ formatPercentage(analytics.occupancyRate) }}
+          </div>
+          <div class="text-success small mt-2">
+            <i class="bi bi-graph-up me-1"></i>
+            Seats filled
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Trend Chart -->
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm bounce-in card-animation-1">
+        <div class="card-body text-center summary-card">
+          <i class="bi bi-graph-up-arrow icon-bg"></i>
+          <div class="display-4 fw-bold text-dark data-update mb-3">
+            Sales Trend
+          </div>
+          
+          <div *ngIf="salesChartOptions && hasRevenueData()" class="chart-container mt-4">
+            <!-- Revenue by Date Table -->
+            <table class="table table-hover">
+              <thead>
+                <tr class="text-dark">
+                  <th>Date</th>
+                  <th class="text-end">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let date of getSortedDates(); let i = index" 
+                    [ngClass]="{'fade-in': true}" 
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    class="text-dark">
+                  <td>{{ date }}</td>
+                  <td class="text-end">{{ formatCurrency(getRevenueForDate(date)) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!salesChartOptions || !hasRevenueData()" class="text-center py-5">
+            <i class="bi bi-exclamation-circle text-dark fs-1"></i>
+            <p class="text-dark mt-3">No sales data available for this show yet.</p>
+            <p class="text-dark small">Data will appear once tickets are sold.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</div>

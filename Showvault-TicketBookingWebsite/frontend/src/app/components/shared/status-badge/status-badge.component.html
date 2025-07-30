@@ -1,0 +1,4 @@
+<span class="badge bg-{{ color }} {{ size === 'sm' ? 'badge-sm' : size === 'lg' ? 'badge-lg' : '' }}">
+  <i *ngIf="showIcon && icon" class="bi bi-{{ icon }} me-1"></i>
+  <span *ngIf="showText">{{ displayName }}</span>
+</span>

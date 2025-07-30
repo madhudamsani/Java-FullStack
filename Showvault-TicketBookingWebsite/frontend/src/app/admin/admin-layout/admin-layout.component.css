@@ -1,0 +1,84 @@
+.admin-layout {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 70px; /* Height of the header */
+}
+
+.admin-sidebar {
+  width: 280px;
+  height: 100%;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: #212529;
+  color: #fff;
+  position: relative;
+  z-index: 1020;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-sidebar.collapsed {
+  width: 0;
+}
+
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+}
+
+.content-wrapper {
+  padding: 1.5rem;
+  min-height: calc(100vh - 70px);
+}
+
+/* Custom scrollbar for admin content */
+.admin-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.admin-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (max-width: 991.98px) {
+  .admin-sidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 70px; /* Below the header */
+    left: 0;
+    bottom: 0;
+    z-index: 1025;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .admin-content {
+    margin-left: 0;
+  }
+  
+  .content-wrapper {
+    padding: 1rem;
+  }
+}

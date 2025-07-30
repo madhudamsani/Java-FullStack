@@ -1,0 +1,228 @@
+<div class="container py-4 fade-in">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/" class="text-primary">Home</a></li>
+      <li class="breadcrumb-item active">Theatres</li>
+    </ol>
+  </nav>
+
+  <!-- Page Title -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Theatres</h1>
+    <div class="d-flex">
+      <a routerLink="/shows" class="btn btn-outline-primary me-2">
+        <i class="bi bi-film me-2"></i>Browse by Movies
+      </a>
+      <a routerLink="/venues/new" class="btn btn-primary" *ngIf="false">
+        <i class="bi bi-plus-circle me-2"></i>Add New Theatre
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-secondary">Loading theatres...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ error }}
+  </div>
+
+  <!-- Enhanced Search and Filter Section -->
+  <div class="search-filter-container mb-4">
+    <div class="search-filter-card">
+      <div class="search-filter-header">
+        <h5 class="search-filter-title">
+          <i class="bi bi-funnel-fill me-2"></i>Find Your Perfect Theatre
+        </h5>
+      </div>
+      <div class="search-filter-body">
+        <div class="row g-3 align-items-end" style="overflow: visible;">
+          <!-- Enhanced Search Bar -->
+          <div class="col-lg-8 col-md-7">
+            
+            <div class="search-input-container">
+              <div class="search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input 
+                  type="text" 
+                  class="form-control search-input" 
+                  placeholder="Search by theatre name, location, or area..." 
+                  [(ngModel)]="searchQuery" 
+                  (keyup.enter)="searchVenues()"
+                  (input)="onSearchInput()"
+                  #searchInput>
+                <button 
+                  *ngIf="searchQuery" 
+                  class="btn-clear-search" 
+                  type="button" 
+                  (click)="clearSearch()"
+                  title="Clear search">
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+              </div>
+              <button 
+                class="btn btn-search" 
+                type="button" 
+                (click)="searchVenues()"
+                [disabled]="loading">
+                <span *ngIf="!loading" class="search-btn-content">
+                  <i class="bi bi-search me-1"></i>Search
+                </span>
+                <span *ngIf="loading" class="search-btn-loading">
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  Searching...
+                </span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Enhanced City Filter Dropdown -->
+          <div class="col-lg-4 col-md-5 dropdown-column">
+            
+            <div class="city-dropdown-container">
+              <div class="dropdown" #cityDropdown>
+                <button 
+                  class="btn btn-city-dropdown dropdown-toggle" 
+                  type="button" 
+                  id="cityDropdown" 
+                  data-bs-toggle="dropdown" 
+                  data-bs-auto-close="true"
+                  aria-expanded="false"
+                  [disabled]="loading">
+                  <div class="dropdown-button-content">
+                    <i class="bi bi-geo-alt-fill me-2"></i>
+                    <span class="city-dropdown-text">{{ selectedCity || 'All Cities' }}</span>
+                    <span class="city-count" *ngIf="!selectedCity && cities.length > 0">
+                      ({{ cities.length }} cities)
+                    </span>
+                  </div>
+                </button>
+                <ul class="dropdown-menu city-dropdown-menu" aria-labelledby="cityDropdown">
+                  <li>
+                    <a 
+                      class="dropdown-item city-dropdown-item" 
+                      [class.active]="!selectedCity"
+                      (click)="filterByCity(''); $event.preventDefault();"
+                      href="#">
+                      <i class="bi bi-globe me-2"></i>
+                      <span>All Cities</span>
+                      <span class="city-item-count" *ngIf="cities.length > 0">({{ cities.length }})</span>
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li *ngFor="let city of cities; trackBy: trackByCity">
+                    <a 
+                      class="dropdown-item city-dropdown-item" 
+                      [class.active]="selectedCity === city"
+                      (click)="filterByCity(city); $event.preventDefault();"
+                      href="#">
+                      <i class="bi bi-building me-2"></i>
+                      <span>{{ city }}</span>
+                    </a>
+                  </li>
+                  <li *ngIf="cities.length === 0 && !loading">
+                    <span class="dropdown-item-text text-muted">
+                      <i class="bi bi-info-circle me-2"></i>No cities available
+                    </span>
+                  </li>
+                  <li *ngIf="loading">
+                    <span class="dropdown-item-text text-muted">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Loading cities...
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div class="active-filters mt-3" *ngIf="searchQuery || selectedCity">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="filter-label">Active filters:</span>
+            <span *ngIf="searchQuery" class="filter-tag search-filter-tag">
+              <i class="bi bi-search me-1"></i>
+              "{{ searchQuery }}"
+              <button class="btn-remove-filter" (click)="clearSearch()">
+                <i class="bi bi-x"></i>
+              </button>
+            </span>
+            <span *ngIf="selectedCity" class="filter-tag city-filter-tag">
+              <i class="bi bi-geo-alt me-1"></i>
+              {{ selectedCity }}
+              <button class="btn-remove-filter" (click)="filterByCity('')">
+                <i class="bi bi-x"></i>
+              </button>
+            </span>
+            <button 
+              class="btn btn-clear-all-filters" 
+              (click)="clearAllFilters()"
+              title="Clear all filters">
+              <i class="bi bi-x-circle me-1"></i>Clear all
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venues List -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" *ngIf="!loading && venues.length > 0">
+    <div class="col" *ngFor="let venue of venues">
+      <div class="card h-100 venue-card">
+        <div class="venue-image-container">
+          <img [src]="sanitizeImageUrl(venue.imageUrl || venue.image_url) || 'assets/images/placeholder-venue.jpg'" 
+               [alt]="venue.name" 
+               class="card-img-top venue-image"
+               onerror="this.src='assets/images/placeholder-venue.jpg'; this.onerror=null;"
+               loading="lazy">
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{ venue.name }}</h5>
+          <p class="card-text text-muted">
+            <i class="bi bi-geo-alt me-1"></i>{{ venue.address }}, {{ venue.city }}
+          </p>
+          <p class="card-text">
+            <i class="bi bi-people me-1"></i>Capacity: {{ venue.capacity }} seats
+          </p>
+        </div>
+        <div class="card-footer bg-white border-top-0">
+          <button class="btn btn-primary w-100" (click)="viewVenueMovies(venue.id!)">
+            <i class="bi bi-film me-2"></i>View Movies
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Venues Message -->
+  <div *ngIf="!loading && venues.length === 0" class="text-center my-5">
+    <i class="bi bi-building text-muted" style="font-size: 3rem;"></i>
+    <h4 class="mt-3">No Theatres Found</h4>
+    <p class="text-muted" *ngIf="searchQuery">
+      No theatres found matching "{{ searchQuery }}".
+    </p>
+    <p class="text-muted" *ngIf="selectedCity && !searchQuery">
+      There are no theatres available in {{ selectedCity }}.
+    </p>
+    <p class="text-muted" *ngIf="!selectedCity && !searchQuery">
+      There are no theatres available at the moment.
+    </p>
+    <div class="mt-3">
+      <button *ngIf="searchQuery" class="btn btn-outline-primary me-2" (click)="searchQuery = ''; loadVenues()">
+        Clear Search
+      </button>
+      <button *ngIf="selectedCity" class="btn btn-outline-primary" (click)="filterByCity('')">
+        View All Theatres
+      </button>
+    </div>
+  </div>
+</div>

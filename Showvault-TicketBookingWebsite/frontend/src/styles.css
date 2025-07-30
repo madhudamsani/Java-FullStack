@@ -1,0 +1,355 @@
+/* Global Styles */
+
+/* Import Bootstrap styles from node_modules - this is already handled in angular.json */
+/* Import Bootstrap Icons */
+
+/* Fix for deprecated -ms-high-contrast property */
+@media (forced-colors: active) {
+  /* Add forced colors mode styles here */
+  .mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button,
+  .mat-flat-button, .mat-fab, .mat-mini-fab {
+    --mat-mdc-button-persistent-ripple-color: ButtonText;
+    --mat-mdc-button-ripple-color: ButtonText;
+  }
+}
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Import Angular Material theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Custom theme colors - red and blue theme as specified in requirements */
+:root {
+  --primary: #0d6efd;    /* Bootstrap primary blue */
+  --secondary: #6c757d;  /* Bootstrap secondary gray */
+  --danger: #dc3545;     /* Bootstrap danger red */
+  --light: #f8f9fa;
+  --dark: #212529;
+  --success: #198754;
+  --info: #0dcaf0;
+  --warning: #ffc107;
+  --body-bg: #f8f9fa;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+}
+
+/* Global styles */
+
+/* Hide browser's password reveal icon in all password fields */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+html {
+  /* Base font size reduced by 10% from the browser default (typically 16px) */
+  font-size: 81%;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--body-bg);
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lead {
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Custom button styles */
+.btn {
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  border-radius: 5px;
+  transition: all var(--transition-speed) ease;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+  color: black;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.4);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: #bb2d3b;
+  border-color: #b02a37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+.btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-outline-danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--danger);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Card styling */
+.card {
+  border: none;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background-color: white;
+  transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.card.shadow-sm {
+  box-shadow: var(--card-shadow);
+}
+
+.hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--hover-shadow);
+}
+
+.card-img-top {
+  height: 240px;
+  object-fit: cover;
+  transition: transform var(--transition-speed) ease;
+}
+
+.hover-effect:hover .card-img-top {
+  transform: scale(1.05);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--dark);
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+/* Form styling */
+.form-control {
+  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ced4da;
+  transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Custom text colors */
+.text-primary {
+  color: var(--primary) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* Navbar styling */
+.navbar {
+  padding: 1rem 0;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.nav-link {
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  transition: color var(--transition-speed) ease;
+}
+
+.nav-link.active {
+  font-weight: 600;
+}
+
+/* Notification bell styling */
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: inline-block;
+}
+
+.notification-bell i {
+  font-size: 1.25rem;
+  color: white;
+}
+
+.notification-bell .notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.65rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 50%;
+  min-width: 1rem;
+  min-height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(25%, -25%);
+}
+
+.notification-bell:hover i {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Footer styling */
+footer {
+  background-color: var(--dark);
+  color: white;
+}
+
+footer h5 {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+footer a {
+  transition: color var(--transition-speed) ease;
+}
+
+footer a:hover {
+  color: var(--primary) !important;
+}
+
+/* Feature icon styling */
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  font-size: 2rem;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+/* Utility classes */
+.section-padding {
+  padding: 5rem 0;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 0.75rem;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: var(--primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .section-padding {
+    padding: 4rem 0;
+  }
+  
+  .section-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 3rem 0;
+  }
+  
+  .btn {
+    padding: 0.4rem 1.2rem;
+  }
+  
+  .card-img-top {
+    height: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .section-padding {
+    padding: 2rem 0;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .card-img-top {
+    height: 180px;
+  }
+}

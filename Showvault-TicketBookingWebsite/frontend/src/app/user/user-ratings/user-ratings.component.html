@@ -1,0 +1,178 @@
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="mb-0">My Ratings & Reviews</h2>
+      <p class="text-muted">Your feedback on shows you've attended</p>
+    </div>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="row mb-4" *ngIf="successMessage || error">
+    <div class="col-12">
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3 mb-md-0">
+      <select class="form-select" [(ngModel)]="ratingFilter" (change)="applyFilters()">
+        <option value="all">All Ratings</option>
+        <option value="5">5 Stars</option>
+        <option value="4">4 Stars</option>
+        <option value="3">3 Stars</option>
+        <option value="2">2 Stars</option>
+        <option value="1">1 Star</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <select class="form-select" [(ngModel)]="sortOrder" (change)="applyFilters()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="highest">Highest Rating</option>
+        <option value="lowest">Lowest Rating</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading your ratings...</p>
+  </div>
+
+  <!-- No Ratings Message -->
+  <div *ngIf="!isLoading && filteredRatings.length === 0" class="text-center py-5">
+    <i class="bi bi-star" style="font-size: 3rem;"></i>
+    <h4 class="mt-3">No Ratings Found</h4>
+    <p class="text-muted" *ngIf="ratingFilter !== 'all' && ratings.length > 0">You don't have any {{ ratingFilter }}-star ratings. Try showing all ratings.</p>
+    <p class="text-muted" *ngIf="ratings.length === 0">You haven't rated any shows yet.</p>
+    <button class="btn btn-primary mt-2" routerLink="/shows">Browse Shows</button>
+  </div>
+
+  <!-- Ratings List -->
+  <div *ngIf="!isLoading && paginatedRatings.length > 0">
+    <div class="card shadow-sm mb-4" *ngFor="let rating of paginatedRatings">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-2 mb-3 mb-md-0">
+            <img [src]="rating.showImageUrl || 'assets/images/placeholder.jpg'" class="img-fluid rounded" alt="{{ rating.showTitle }}">
+          </div>
+          <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="card-title mb-1">{{ rating.showTitle || 'Untitled Show' }}</h5>
+                <p class="text-muted mb-2">
+                  <small>
+                    <i class="bi bi-geo-alt me-1"></i> {{ rating.venue || 'Unknown Venue' }} 
+                    <span *ngIf="rating.showDate">| <i class="bi bi-calendar-event ms-2 me-1"></i> {{ getFormattedDate(rating.showDate) }}</span>
+                  </small>
+                </p>
+                <div class="rating-stars mb-3">
+                  <i class="bi bi-star-fill text-warning" *ngFor="let star of getStarArray(rating.rating)"></i>
+                  <i class="bi bi-star text-warning" *ngFor="let star of getEmptyStarArray(rating.rating)"></i>
+                  <small class="text-muted ms-2" *ngIf="rating.date">Rated on {{ getFormattedDate(rating.date) }}</small>
+                  <small class="text-muted ms-2" *ngIf="!rating.date && rating.createdAt">Rated on {{ getFormattedDate(rating.createdAt) }}</small>
+                </div>
+                <p class="card-text" *ngIf="rating.review">{{ rating.review }}</p>
+                <p class="card-text" *ngIf="!rating.review && rating.comment">{{ rating.comment }}</p>
+                <p class="card-text text-muted fst-italic" *ngIf="!rating.review && !rating.comment">No written review provided.</p>
+              </div>
+              <div class="rating-actions">
+                <button class="btn btn-sm btn-outline-primary me-2" (click)="viewShow(rating.showId)" *ngIf="rating.showId">
+                  <i class="bi bi-eye me-1"></i> View Show
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2" (click)="openEditModal(rating)">
+                  <i class="bi bi-pencil me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteRating(rating.id)" *ngIf="rating.id">
+                  <i class="bi bi-trash me-1"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && totalPages > 1" class="d-flex justify-content-center mt-4">
+    <nav aria-label="Ratings pagination">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" 
+            [class.active]="currentPage === i + 1">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(i + 1)">{{ i + 1 }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Edit Rating Modal -->
+  <div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="editRatingModalLabel" [attr.aria-hidden]="!showEditModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editRatingModalLabel">Edit Your Rating</h5>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="editRatingForm">
+            <div class="mb-3">
+              <label for="rating" class="form-label">Rating</label>
+              <div class="star-rating">
+                <div class="star-container">
+                  <input type="radio" id="star5" name="rating" value="5" formControlName="rating">
+                  <label for="star5" title="5 stars"><i class="bi bi-star-fill"></i></label>
+                  
+                  <input type="radio" id="star4" name="rating" value="4" formControlName="rating">
+                  <label for="star4" title="4 stars"><i class="bi bi-star-fill"></i></label>
+                  
+                  <input type="radio" id="star3" name="rating" value="3" formControlName="rating">
+                  <label for="star3" title="3 stars"><i class="bi bi-star-fill"></i></label>
+                  
+                  <input type="radio" id="star2" name="rating" value="2" formControlName="rating">
+                  <label for="star2" title="2 stars"><i class="bi bi-star-fill"></i></label>
+                  
+                  <input type="radio" id="star1" name="rating" value="1" formControlName="rating">
+                  <label for="star1" title="1 star"><i class="bi bi-star-fill"></i></label>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="review" class="form-label">Review (Optional)</label>
+              <textarea class="form-control" id="review" rows="4" formControlName="review" placeholder="Share your thoughts about the show..."></textarea>
+              <div class="form-text text-end" [class.text-danger]="editRatingForm.get('review')?.errors?.['maxlength']">
+                {{ editRatingForm.get('review')?.value?.length || 0 }}/500
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" [disabled]="editRatingForm.invalid" (click)="updateRating()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showEditModal" *ngIf="showEditModal"></div>
+</div>

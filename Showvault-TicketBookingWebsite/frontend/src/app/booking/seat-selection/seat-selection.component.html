@@ -1,0 +1,314 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Loading and Error States -->
+    <div class="col-12" *ngIf="loading">
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12" *ngIf="error">
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+        <div class="mt-2">
+          <button class="btn btn-outline-danger btn-sm" (click)="refreshSeatMap()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh Seat Map
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-12" *ngIf="!loading && !error">
+      <!-- Show and Schedule Info - BookMyShow Style -->
+      <div class="card mb-4">
+        <div class="card-body p-3">
+          <div class="d-flex align-items-center">
+            <img [src]="show?.posterUrl || show?.imageUrl || show?.image || getImageUrl(null, show?.type || 'Show', show?.title)" 
+                 [alt]="show?.title" 
+                 class="me-3" 
+                 style="width: 80px; height: 120px; object-fit: cover; border-radius: 4px;">
+            <div>
+              <h4 class="card-title mb-1">{{ show?.title }}</h4>
+              <div class="d-flex align-items-center mb-1">
+                <span class="badge me-2" 
+                      [ngStyle]="{'background-color': 'var(--bms-red)'}">
+                  {{ show?.type }}
+                </span>
+                <span class="text-muted small" *ngIf="show?.duration">
+                  <i class="bi bi-stopwatch me-1"></i>{{ show?.duration }} min
+                </span>
+              </div>
+              <div class="text-muted small">
+                <div><i class="bi bi-calendar-event me-2"></i>{{ schedule?.showDate | date:'fullDate' }}</div>
+                <div><i class="bi bi-clock me-2"></i>{{ schedule?.showTime }}</div>
+                <div><i class="bi bi-building me-2"></i>{{ schedule?.venue?.name || (show?.venue | json) }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Time Warning Banner -->
+          <div class="alert alert-warning mt-3 mb-0" *ngIf="getTimeWarning()">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ getTimeWarning() }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Seat Selection Container -->
+      <div class="seat-selection-container">
+        <!-- Message when no seats are available -->
+        <div *ngIf="!seats || seats.length === 0" class="alert alert-info text-center my-4">
+          <h4><i class="bi bi-info-circle me-2"></i>Seat Map Information</h4>
+          <p>We're generating a seat map for this show. Please wait a moment...</p>
+          <button mat-raised-button color="primary" (click)="refreshSeatMap()" class="mt-2">
+            <i class="bi bi-arrow-clockwise me-2"></i>Refresh Seat Map
+          </button>
+        </div>
+
+        <!-- Seat Map - BookMyShow Style -->
+        <div class="seat-map" *ngIf="hasSeatMapRows()" [ngClass]="getTheaterLayoutClass()">
+          <!-- Screen -->
+          <div class="screen-container">
+            <div class="screen" [style.width.%]="getScreenWidth()">
+              {{ seatMap?.screen || 'SCREEN THIS WAY' }}
+            </div>
+            <div class="screen-shadow"></div>
+            <div class="theater-info text-center mb-3" style="font-size: 14px; color: #666;">
+              <p class="mb-1">
+                <i class="bi bi-info-circle me-1"></i> {{ getAvailableSeatsCount() }} seats available out of {{ seatMap?.metadata?.['totalSeats'] || schedule?.venue?.capacity || seats.length }} total seats
+              </p>
+              
+              <small *ngIf="!(seatMap?.metadata?.totalRows) && schedule?.venue?.capacity" class="d-block mb-1">
+                <i class="bi bi-grid-3x3 me-1"></i> Seat layout configured for {{ schedule?.venue?.capacity }} total seats
+              </small>
+              <small *ngIf="!(seatMap?.metadata?.totalRows) && !(schedule?.venue?.capacity)" class="d-block mb-1">
+                <i class="bi bi-grid-3x3 me-1"></i> Seat layout reflects the actual theater configuration
+              </small>
+              <div *ngIf="schedule && schedule.venue" class="mt-1">
+                <small>
+                  <i class="bi bi-building me-1"></i> Venue: {{ schedule.venue.name }} (Capacity: {{ getVenueCapacity() }})
+                </small>
+              </div>
+              <div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary" (click)="refreshSeatMap()">
+                  <i class="bi bi-arrow-clockwise me-1"></i> Refresh Seat Map
+                </button>
+              </div>
+              
+              <!-- Warning for seat count discrepancy -->
+              <div *ngIf="hasSeatCountDiscrepancy()" class="alert alert-warning mt-3 mb-0 py-2 px-3" style="font-size: 0.85rem;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>Seat count discrepancy detected!</strong> 
+                <span *ngIf="seatMap && seatMap.metadata && seatMap.metadata['receivedSeats'] !== undefined && seatMap.metadata['expectedSeats'] !== undefined">
+                  Received {{ seatMap.metadata['receivedSeats'] }} of {{ seatMap.metadata['expectedSeats'] }} expected seats.
+                </span>
+                <span *ngIf="!(seatMap && seatMap.metadata && seatMap.metadata['receivedSeats'] !== undefined && seatMap.metadata['expectedSeats'] !== undefined)">
+                  The seat count doesn't match the venue capacity.
+                </span>
+                <div class="mt-1">
+                  <button class="btn btn-sm btn-warning" (click)="refreshSeatMap()">
+                    <i class="bi bi-arrow-repeat me-1"></i> Refresh Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Rows of seats with dynamic layout -->
+          <div class="row-container" *ngFor="let row of seatMap?.rows; let rowIndex = index" 
+               [style.margin-bottom.px]="getRowSpacing()">
+            <div class="row-label" style="font-weight: bold; color: #666;">{{ row.rowLabel }}</div>
+            <div class="seats-row">
+              <!-- Add spacers for theater layout if needed -->
+              <div *ngIf="row.seats && row.seats.length > 0 && row.seats[0].seatNumber > 1" 
+                   class="seat-spacer" 
+                   [style.width.px]="(row.seats[0].seatNumber - 1) * 43">
+              </div>
+              
+              <div *ngFor="let seat of row.seats" 
+                   class="seat"
+                   [attr.data-row]="row.rowLabel"
+                   [attr.data-seat]="seat.seatNumber"
+                   [ngStyle]="getSeatStatusStyle(getSeatFromMap(row.rowLabel, seat.seatNumber) || {})"
+                   [ngClass]="{
+                     'selected': isSeatSelected(row.rowLabel, seat.seatNumber),
+                     'standard': getSeatCategory(row.rowLabel, seat.seatNumber) === 'STANDARD',
+                     'premium': getSeatCategory(row.rowLabel, seat.seatNumber) === 'PREMIUM',
+                     'vip': getSeatCategory(row.rowLabel, seat.seatNumber) === 'VIP'
+                   }"
+                   (click)="onSeatClick(getSeatFromMap(row.rowLabel, seat.seatNumber) || {})"
+                   (mouseenter)="showSeatTooltip($event, row.rowLabel, seat.seatNumber)"
+                   (mouseleave)="hideSeatTooltip($event)">
+                <div class="seat-info" [ngStyle]="getCategoryStyle(getSeatFromMap(row.rowLabel, seat.seatNumber) || {})">
+                  {{ row.rowLabel }}{{ seat.seatNumber }}
+                </div>
+                <div class="seat-tooltip" *ngIf="getSeatFromMap(row.rowLabel, seat.seatNumber)?.status === 'AVAILABLE'">
+                  {{ row.rowLabel }}{{ seat.seatNumber }} - {{ getSeatCategoryNameByPosition(row.rowLabel, seat.seatNumber) }}
+                  <br>₹{{ getSeatPriceByPosition(row.rowLabel, seat.seatNumber) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Fallback to flat grid if structured seat map is not available -->
+        <div class="seat-grid" *ngIf="hasNoSeatMapRows() && seats && seats.length > 0">
+          <div *ngFor="let seat of seats" 
+               class="seat"
+               [ngStyle]="getSeatStatusStyle(seat)"
+               [ngClass]="{'selected': seat.isSelected}"
+               (click)="onSeatClick(seat)">
+            <div class="seat-info" [ngStyle]="getCategoryStyle(seat)">
+              {{ seat.row }}{{ seat.seatNumber }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Seat Legend - BookMyShow Style -->
+        <div class="seat-legend-container mt-4 mb-3">
+          <div class="legend-title text-center mb-2">
+            <small class="text-muted">SEAT LEGEND</small>
+          </div>
+          <div class="legend d-flex justify-content-center flex-wrap">
+            <!-- Seat Status -->
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot available" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #fff; border: 1px solid #1ea83c;"></span>
+              <span style="font-size: 14px; color: #666;">Available</span>
+            </div>
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot selected" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #f84464; border: 1px solid #f84464;"></span>
+              <span style="font-size: 14px; color: #666;">Selected</span>
+            </div>
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot booked" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #aaa; border: 1px solid #aaa;"></span>
+              <span style="font-size: 14px; color: #666;">Sold</span>
+            </div>
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot reserved" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #ffc107; border: 1px solid #ffc107;"></span>
+              <span style="font-size: 14px; color: #666;">Reserved</span>
+            </div>
+          </div>
+          
+          <!-- Seat Categories -->
+          <div class="legend-title text-center mt-3 mb-2">
+            <small class="text-muted">SEAT CATEGORIES</small>
+          </div>
+          <div class="legend d-flex justify-content-center flex-wrap">
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot standard" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #fff; border: 2px solid #1ea83c;"></span>
+              <span style="font-size: 14px; color: #666;">Standard</span>
+            </div>
+            <div class="legend-item d-flex align-items-center me-4 mb-2">
+              <span class="status-dot premium" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #fff; border: 2px solid #0044ff;"></span>
+              <span style="font-size: 14px; color: #666;">Premium</span>
+            </div>
+            <div class="legend-item d-flex align-items-center mb-2">
+              <span class="status-dot vip" style="width: 20px; height: 20px; border-radius: 4px; display: inline-block; margin-right: 8px; background-color: #fff; border: 2px solid #dc3545;"></span>
+              <span style="font-size: 14px; color: #666;">VIP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Seats Summary - BookMyShow Style -->
+        <div class="card mt-4 booking-summary-card" *ngIf="bookingSummary">
+          <div class="card-header" style="background-color: var(--bms-red); color: white;">
+            <h5 class="mb-0"><i class="bi bi-ticket-perforated me-2"></i>Booking Summary</h5>
+          </div>
+          <div class="card-body">
+            <h6 class="mb-3 d-flex align-items-center">
+              <i class="bi bi-check-circle-fill me-2" style="color: var(--bms-red);"></i>
+              Selected Seats ({{ selectedSeats.length }})
+            </h6>
+            <div class="selected-seats d-flex flex-wrap mb-3">
+              <div *ngFor="let seat of selectedSeats" 
+                   class="selected-seat-item me-2 mb-2 p-2" 
+                   style="border: 1px solid #eee; border-radius: 4px; background-color: #f9f9f9; position: relative; overflow: hidden;">
+                <div class="seat-category-indicator" 
+                     [ngStyle]="{
+                       'background-color': seat.category === 'PREMIUM' ? '#ffa500' : 
+                                          seat.category === 'VIP' ? '#9c27b0' : '#1ea83c',
+                       'position': 'absolute',
+                       'top': '0',
+                       'left': '0',
+                       'width': '4px',
+                       'height': '100%'
+                     }"></div>
+                <div class="ps-2">
+                  <span class="seat-label fw-bold">{{ seat.row || getSeatRow(seat) }}{{ seat.seatNumber }}</span>
+                  <span class="badge ms-1" 
+                        [ngStyle]="{
+                          'background-color': seat.category === 'PREMIUM' ? '#ffa500' : 
+                                             seat.category === 'VIP' ? '#9c27b0' : '#1ea83c',
+                          'color': 'white',
+                          'font-size': '10px'
+                        }">
+                    {{ seat.category }}
+                  </span>
+                  <span class="price ms-2">₹{{ seat.price ? seat.price.toFixed(0) : '0' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="price-breakdown mt-4">
+              <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+                <span class="text-muted">Subtotal</span>
+                <span>₹{{ bookingSummary.pricing.subtotal ? bookingSummary.pricing.subtotal.toFixed(0) : '0' }}</span>
+              </div>
+              <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+                <span class="text-muted">
+                  <i class="bi bi-info-circle me-1" style="font-size: 12px;"></i>
+                  Convenience Fee (5%)
+                </span>
+                <span>₹{{ bookingSummary.pricing.fees ? bookingSummary.pricing.fees.toFixed(0) : '0' }}</span>
+              </div>
+              <div class="price-item d-flex justify-content-between py-2" style="border-bottom: 1px dashed #eee;">
+                <span class="text-muted">
+                  <i class="bi bi-info-circle me-1" style="font-size: 12px;"></i>
+                  GST (18%)
+                </span>
+                <span>₹{{ bookingSummary.pricing.taxes ? bookingSummary.pricing.taxes.toFixed(0) : '0' }}</span>
+              </div>
+              <div class="price-item total d-flex justify-content-between py-3 fw-bold" style="font-size: 18px; color: var(--bms-red); border-bottom: 2px solid #eee; margin-top: 5px;">
+                <span>Total Amount</span>
+                <span>₹{{ bookingSummary.pricing.total ? bookingSummary.pricing.total.toFixed(0) : '0' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons - BookMyShow Style -->
+        <div class="action-buttons-container mt-4">
+          <div class="action-buttons d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" 
+                    style="border-color: var(--bms-red); color: var(--bms-red); border-radius: 4px; padding: 10px 20px;"
+                    (click)="goBack()">
+              <i class="bi bi-arrow-left me-2"></i>Back
+            </button>
+            <button class="btn proceed-button" 
+                    style="background-color: var(--bms-red); color: black; font-weight: 600; border-radius: 4px; padding: 10px 25px; box-shadow: 0 2px 8px rgba(248, 68, 100, 0.3);"
+                    [disabled]="!selectedSeats.length || processingBooking"
+                    [ngClass]="{'disabled-button': !selectedSeats.length || processingBooking}"
+                    (click)="proceedToCheckout()">
+              <i class="bi bi-credit-card-2-front me-2"></i>
+              Proceed to Payment
+              <span *ngIf="processingBooking" class="ms-2">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </span>
+            </button>
+          </div>
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              <i class="bi bi-shield-check me-1"></i>
+              Secure Payment | <i class="bi bi-clock-history me-1"></i> Quick Checkout
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

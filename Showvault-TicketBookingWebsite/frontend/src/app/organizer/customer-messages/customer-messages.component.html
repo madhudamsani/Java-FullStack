@@ -1,0 +1,258 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="mb-0">
+        {{ showId ? 'Show Messages' : 'Customer Messages' }}
+      </h2>
+      <p class="text-muted">
+        {{ showId ? 'Communicate with attendees of this show' : 'Manage all your customer communications' }}
+      </p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-md-end align-items-center">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="bi bi-envelope-plus me-1"></i> New Message
+      </button>
+    </div>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="row mb-4" *ngIf="successMessage || error">
+    <div class="col-12">
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" placeholder="Search messages..." [(ngModel)]="searchQuery">
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+      <select class="form-select" [(ngModel)]="statusFilter">
+        <option value="all">All Statuses</option>
+        <option value="DRAFT">Draft</option>
+        <option value="SCHEDULED">Scheduled</option>
+        <option value="SENT">Sent</option>
+        <option value="FAILED">Failed</option>
+      </select>
+    </div>
+    <div class="col-md-4" *ngIf="!showId">
+      <select class="form-select" [(ngModel)]="showFilter">
+        <option value="all">All Shows</option>
+        <option *ngFor="let show of shows" [value]="show.id">{{ show.title }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading messages...</p>
+  </div>
+
+  <!-- No Messages Message -->
+  <div *ngIf="!isLoading && filteredMessages.length === 0" class="text-center py-5">
+    <i class="bi bi-envelope" style="font-size: 3rem;"></i>
+    <h4 class="mt-3">No Messages Found</h4>
+    <p class="text-muted" *ngIf="statusFilter !== 'all' && messages.length > 0">No messages with this status. Try showing all statuses.</p>
+    <p class="text-muted" *ngIf="showFilter !== 'all' && messages.length > 0">No messages for this show. Try showing all shows.</p>
+    <p class="text-muted" *ngIf="searchQuery && messages.length > 0">No messages match your search. Try a different query.</p>
+    <p class="text-muted" *ngIf="messages.length === 0">You haven't created any messages yet.</p>
+    <button class="btn btn-primary mt-2" (click)="openCreateModal()">Create Your First Message</button>
+  </div>
+
+  <!-- Messages List -->
+  <div *ngIf="!isLoading && filteredMessages.length > 0">
+    <div class="card shadow-sm mb-4" *ngFor="let message of filteredMessages">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center mb-2">
+              <span [ngClass]="getStatusClass(message.status)" class="me-2">
+                {{ message.status | titlecase }}
+              </span>
+              <h5 class="card-title mb-0">{{ message.subject }}</h5>
+            </div>
+            <p class="text-muted mb-2">
+              <small>
+                <i class="bi bi-calendar-event me-1"></i> Created: {{ getFormattedDate(message.createdAt) }}
+                <span *ngIf="message.scheduledFor" class="ms-2">
+                  <i class="bi bi-clock me-1"></i> Scheduled: {{ getFormattedDate(message.scheduledFor) }}
+                </span>
+                <span *ngIf="message.sentAt" class="ms-2">
+                  <i class="bi bi-send me-1"></i> Sent: {{ getFormattedDate(message.sentAt) }}
+                </span>
+              </small>
+            </p>
+            <p class="text-muted mb-2">
+              <small>
+                <i class="bi bi-people me-1"></i> Recipients: {{ getRecipientTypeLabel(message.recipientType) }} ({{ message.recipientCount }})
+                <span *ngIf="message.showTitle" class="ms-2">
+                  <i class="bi bi-ticket-perforated me-1"></i> Show: {{ message.showTitle }}
+                </span>
+              </small>
+            </p>
+            <p class="card-text message-preview">{{ message.content }}</p>
+          </div>
+          <div class="col-md-4 d-flex flex-column justify-content-center align-items-end">
+            <div class="btn-group mb-2">
+              <button class="btn btn-sm btn-outline-primary" (click)="openPreviewModal(message)">
+                <i class="bi bi-eye me-1"></i> Preview
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" (click)="openEditModal(message)" [disabled]="message.status === 'SENT'">
+                <i class="bi bi-pencil me-1"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteMessage(message.id)">
+                <i class="bi bi-trash me-1"></i> Delete
+              </button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-success" (click)="sendMessage(message)" [disabled]="message.status === 'SENT'">
+                <i class="bi bi-send me-1"></i> Send Now
+              </button>
+              <button class="btn btn-sm btn-info text-white" (click)="scheduleMessage(message)" [disabled]="message.status === 'SENT'">
+                <i class="bi bi-clock me-1"></i> Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Modal -->
+  <div class="modal fade" [class.show]="showMessageModal" [style.display]="showMessageModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="messageModalLabel" [attr.aria-hidden]="!showMessageModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalLabel">{{ isEditing ? 'Edit Message' : 'Create Message' }}</h5>
+          <button type="button" class="btn-close" (click)="closeMessageModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="messageForm">
+            <div class="mb-3" *ngIf="!showId">
+              <label for="showId" class="form-label">Show (Optional)</label>
+              <select class="form-select" id="showId" formControlName="showId">
+                <option [ngValue]="null">All Shows</option>
+                <option *ngFor="let show of shows" [value]="show.id">{{ show.title }}</option>
+              </select>
+              <div class="form-text">If selected, this message will be associated with a specific show.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="subject" class="form-label">Subject*</label>
+              <input type="text" class="form-control" id="subject" formControlName="subject" placeholder="Enter message subject">
+              <div *ngIf="messageForm.get('subject')?.invalid && messageForm.get('subject')?.touched" class="text-danger">
+                Subject is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="content" class="form-label">Message Content*</label>
+              <textarea class="form-control" id="content" formControlName="content" rows="6" placeholder="Enter your message here..."></textarea>
+              <div *ngIf="messageForm.get('content')?.invalid && messageForm.get('content')?.touched" class="text-danger">
+                <div *ngIf="messageForm.get('content')?.errors?.['required']">Message content is required</div>
+                <div *ngIf="messageForm.get('content')?.errors?.['minlength']">Message content must be at least 10 characters</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="recipientType" class="form-label">Recipients*</label>
+              <select class="form-select" id="recipientType" formControlName="recipientType">
+                <option value="ALL">All Customers</option>
+                <option value="TICKET_HOLDERS">Ticket Holders Only</option>
+                <option value="SPECIFIC">Specific Recipients</option>
+              </select>
+            </div>
+
+            <div class="mb-3" *ngIf="messageForm.get('status')?.value === 'scheduled'">
+              <label for="scheduledFor" class="form-label">Schedule Date*</label>
+              <input type="datetime-local" class="form-control" id="scheduledFor" formControlName="scheduledFor">
+              <div *ngIf="messageForm.get('scheduledFor')?.invalid && messageForm.get('scheduledFor')?.touched" class="text-danger">
+                Schedule date is required for scheduled messages
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="status" class="form-label">Status*</label>
+              <select class="form-select" id="status" formControlName="status">
+                <option value="DRAFT">Draft</option>
+                <option value="SCHEDULED">Scheduled</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeMessageModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" [disabled]="messageForm.invalid" (click)="saveMessage()">
+            {{ isEditing ? 'Update Message' : 'Create Message' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showMessageModal" *ngIf="showMessageModal"></div>
+
+  <!-- Preview Modal -->
+  <div class="modal fade" [class.show]="showPreviewModal" [style.display]="showPreviewModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="previewModalLabel" [attr.aria-hidden]="!showPreviewModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="previewModalLabel">Message Preview</h5>
+          <button type="button" class="btn-close" (click)="closePreviewModal()"></button>
+        </div>
+        <div class="modal-body" *ngIf="previewMessage">
+          <div class="card">
+            <div class="card-header bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>From:</strong> ShowVault <span class="text-muted">&lt;noreply@showvault.com&gt;</span>
+                </div>
+                <div class="text-muted">{{ getFormattedDate(previewMessage.createdAt) }}</div>
+              </div>
+              <div class="mt-2">
+                <strong>To:</strong> {{ getRecipientTypeLabel(previewMessage.recipientType) }}
+              </div>
+              <div class="mt-2">
+                <strong>Subject:</strong> {{ previewMessage.subject }}
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="email-content">
+                <p>Dear Customer,</p>
+                <p>{{ previewMessage.content }}</p>
+                <p>Thank you for choosing ShowVault.</p>
+                <p>Best regards,<br>The ShowVault Team</p>
+              </div>
+            </div>
+            <div class="card-footer bg-light">
+              <div class="text-muted small">
+                <p class="mb-1">This is an automated message. Please do not reply to this email.</p>
+                <p class="mb-0">© 2024 ShowVault - All Rights Reserved</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">Close</button>
+          <button type="button" class="btn btn-success" (click)="sendMessage(previewMessage!); closePreviewModal()" *ngIf="previewMessage && previewMessage.status !== 'SENT'">
+            <i class="bi bi-send me-1"></i> Send Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showPreviewModal" *ngIf="showPreviewModal"></div>
+</div>

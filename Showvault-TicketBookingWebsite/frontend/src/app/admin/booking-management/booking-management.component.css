@@ -1,0 +1,269 @@
+/* Table styling */
+.table {
+  font-size: 0.9em;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Badge styling */
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 0.375rem;
+  min-width: 85px;
+  text-align: center;
+  display: inline-block;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Card styling */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1rem;
+}
+
+/* Filter section */
+.filter-card {
+  background-color: #f8f9fa;
+  border: none;
+  margin-bottom: 1.5rem;
+}
+
+.filter-card .form-select {
+  min-width: 130px;
+  font-size: 0.9em;
+}
+
+.filter-label {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.filter-card .form-control,
+.filter-card .btn {
+  font-size: 0.9em;
+}
+
+.filter-card .input-group-sm .form-control,
+.filter-card .input-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+.filter-card .btn-sm {
+  padding: 0.25rem 0.75rem;
+}
+
+/* Ensure consistent spacing */
+.filter-card .col-auto {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .filter-card .row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+  .filter-card .form-select {
+    min-width: 110px;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-label {
+    display: none;
+  }
+}
+
+/* Form validation */
+.text-danger.small {
+  font-size: 0.75em;
+  margin-top: 0.25rem;
+}
+
+/* Button group styling */
+.btn-group .btn {
+  margin-right: 5px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Modal styling */
+.modal-header {
+  background-color: var(--primary-color, #0d6efd);
+  color: white;
+  padding: 1rem;
+}
+
+.modal-header .btn-close {
+  color: white;
+  opacity: 0.8;
+}
+
+.modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  font-size: 0.9em;
+}
+
+.modal-footer {
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.modal-footer .btn {
+  padding: 0.375rem 0.75rem;
+  font-weight: 500;
+}
+
+/* Pagination styling */
+.pagination {
+  font-size: 0.9em;
+}
+
+.page-link {
+  padding: 0.375rem 0.75rem;
+  color: var(--primary-color, #0d6efd);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color, #0d6efd);
+  border-color: var(--primary-color, #0d6efd);
+  color: white;
+}
+
+/* Status colors with improved contrast */
+.badge.bg-success {
+  background-color: #28a745 !important;
+  color: #ffffff !important;
+  border: 1px solid #1e7e34;
+}
+
+.badge.bg-warning {
+  background-color: #fd7e14 !important;
+  color: #ffffff !important;
+  border: 1px solid #e55a00;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  border: 1px solid #bd2130;
+}
+
+.badge.bg-info {
+  background-color: #17a2b8 !important;
+  color: #ffffff !important;
+  border: 1px solid #138496;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+  color: #ffffff !important;
+  border: 1px solid #545b62;
+}
+
+.badge.bg-primary {
+  background-color: #007bff !important;
+  color: #ffffff !important;
+  border: 1px solid #0056b3;
+}
+
+/* Status-specific enhancements */
+.badge.bg-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%) !important;
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #3498db 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #95a5a6 100%) !important;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+/* Responsive badge adjustments */
+@media (max-width: 768px) {
+  .badge {
+    font-size: 0.7em;
+    padding: 0.4em 0.6em;
+    min-width: 70px;
+  }
+}
+
+/* Responsive adjustments for button groups */
+@media (max-width: 768px) {
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .btn-group .btn {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .btn-group .btn:last-child {
+    margin-bottom: 0;
+  }
+}

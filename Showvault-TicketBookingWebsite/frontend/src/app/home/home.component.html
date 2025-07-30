@@ -1,0 +1,323 @@
+<!-- Main Banner Carousel -->
+<div class="main-banner-carousel mb-4">
+  <div id="mainBannerCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+      <button *ngFor="let show of featuredShows; let i = index" type="button" data-bs-target="#mainBannerCarousel" [attr.data-bs-slide-to]="i" [class.active]="i === 0" [attr.aria-current]="i === 0 ? 'true' : null"></button>
+    </div>
+    <div class="carousel-inner">
+      <div *ngFor="let show of featuredShows; let i = index" class="carousel-item" [class.active]="i === 0">
+        <div class="banner-gradient-overlay"></div>
+        <img [src]="sanitizeImageUrl(show.posterUrl || show.imageUrl || show.image) || 'assets/images/placeholder.png'" class="d-block w-100" alt="{{show.title}}" onerror="this.src='assets/images/placeholder.png'; this.onerror=null;">
+        <div class="carousel-caption">
+          <div class="banner-content">
+            <span class="banner-badge">{{show.type}}</span>
+            <h2 class="banner-title">{{show.title}}</h2>
+            <p class="banner-info">
+              <span><i class="bi bi-calendar3"></i> {{show.date | date:'mediumDate'}}</span>
+              <span><i class="bi bi-geo-alt-fill"></i> {{show.venue}}</span>
+            </p>
+            <a [routerLink]="['/shows', show.id]" class="btn btn-book-now">
+              Book Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#mainBannerCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#mainBannerCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+</div>
+
+<!-- Quick Access Categories -->
+<div class="container mb-5">
+  <div class="quick-access-categories">
+    <div class="category-item" *ngFor="let category of categories" (click)="navigateToCategory(category.params.category)">
+      <div class="category-icon">
+        <i class="{{category.icon}}"></i>
+      </div>
+      <span class="category-name">{{category.name}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Active Promotions Section -->
+<div class="promotions-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title text-white">
+        <i class="bi bi-tag-fill me-2"></i>
+        Special Offers & Promotions
+      </h2>
+    </div>
+  
+  <!-- Show promotions carousel if available -->
+  <div class="position-relative" *ngIf="activePromotions && activePromotions.length > 0">
+    <div id="promotionsCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        <button *ngFor="let promotion of activePromotions; let i = index" 
+                type="button" 
+                data-bs-target="#promotionsCarousel" 
+                [attr.data-bs-slide-to]="i" 
+                [class.active]="i === 0" 
+                [attr.aria-current]="i === 0 ? 'true' : null"></button>
+      </div>
+      
+      <div class="carousel-inner">
+        <div *ngFor="let promotion of activePromotions; let i = index" 
+             class="carousel-item" 
+             [class.active]="i === 0">
+          <div class="promotion-card mx-auto" style="max-width: 600px;">
+            <div class="promotion-content">
+              <div class="promotion-header">
+                <div class="promotion-badge" 
+                     [ngClass]="{
+                       'percentage-badge': promotion.discountType === 'PERCENTAGE',
+                       'fixed-badge': promotion.discountType === 'FIXED',
+                       'special-badge': promotion.discountType === 'BUY_X_GET_Y'
+                     }">
+                  <span *ngIf="promotion.discountType === 'PERCENTAGE'">
+                    {{ promotion.discountValue }}% OFF
+                  </span>
+                  <span *ngIf="promotion.discountType === 'FIXED'">
+                    ₹{{ promotion.discountValue }} OFF
+                  </span>
+                  <span *ngIf="promotion.discountType === 'BUY_X_GET_Y'">
+                    SPECIAL OFFER
+                  </span>
+                </div>
+                <div class="promotion-code">
+                  <span class="code-label">Use Code:</span>
+                  <span class="code-value" (click)="copyPromotionCode(promotion.code)">
+                    {{ promotion.code }}
+                    <i class="bi bi-clipboard ms-1"></i>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="promotion-details">
+                <h4 class="promotion-name">{{ promotion.name }}</h4>
+                <p class="promotion-description">{{ promotion.description }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mt-3" align-items="center">
+                  <div class="promotion-validity" *ngIf="promotion.endDate" >
+                    <i class="bi bi-clock me-1"></i>
+                    Valid until {{ promotion.endDate | date:'mediumDate' }}
+                  </div>
+                  
+                  
+                </div>
+              </div>
+              
+              <div class="promotion-actions mt-4">
+                <button class="btn btn-promotion" 
+                        (click)="applyPromotionAndNavigate(promotion.code)"
+                        [disabled]="promotion.currentUses >= promotion.maxUses">
+                  <i class="bi bi-ticket-perforated me-2"></i>
+                  Book with Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="carousel-control-prev" type="button" data-bs-target="#promotionsCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#promotionsCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+  
+    <!-- Show message when no promotions are available -->
+    <div class="no-promotions-message text-center py-5 rounded" *ngIf="!activePromotions || activePromotions.length === 0">
+      <i class="bi bi-tag" style="font-size: 3rem; color: rgba(255,255,255,0.7);"></i>
+      <p class="mt-3 mb-1 fs-5" style="color: rgba(255,255,255,0.9);">No active promotions at the moment.</p>
+      <p style="color: rgba(255,255,255,0.7);">Check back later for exciting offers!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Recommended Movies Section -->
+<div class="container mb-5">
+  <div class="section-header">
+    <h2 class="section-title">Recommended Movies</h2>
+    <a routerLink="/shows" class="view-all" (click)="checkLoginBeforeNavigate($event, '/shows')">
+      See All <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+  
+  <div class="movie-slider">
+    <div class="movie-card" *ngFor="let show of featuredShows.slice(0, 5)">
+      <div class="movie-poster">
+        <span class="movie-type-badge">{{show.type}}</span>
+        <img [src]="sanitizeImageUrl(show.image || show.posterUrl || show.imageUrl) || 'assets/images/placeholder.png'" alt="{{show.title}}" onerror="this.src='assets/images/placeholder.png'; this.onerror=null;">
+        <div class="movie-rating bms-rating-style">
+          <i class="bi bi-star-fill"></i> 
+          <span>{{show.rating || '4.0'}}</span>
+        </div>
+      </div>
+      <div class="movie-details">
+        <h3 class="movie-title">{{show.title}}</h3>
+        <p class="movie-genre">{{show.type}}</p>
+        <a [routerLink]="['/shows', show.id]" class="btn btn-book" (click)="checkLoginBeforeNavigate($event, '/shows/' + show.id)">
+          Book
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events You Might Like -->
+<div class="container mb-5">
+  <div class="section-header">
+    <h2 class="section-title">Events You Might Like</h2>
+    <a routerLink="/shows" class="view-all" (click)="checkLoginBeforeNavigate($event, '/shows')">
+      See All <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+  
+  <div class="events-grid">
+    <div class="event-card" *ngFor="let show of upcomingShows.slice(0, 4)">
+      <div class="event-image">
+        <img [src]="sanitizeImageUrl(show.image || show.posterUrl || show.imageUrl) || 'assets/images/placeholder.png'" alt="{{show.title}}" onerror="this.src='assets/images/placeholder.png'; this.onerror=null;">
+      </div>
+      <div class="event-details">
+        <h3 class="event-title">{{show.title}}</h3>
+        <p class="event-venue">
+          <i class="bi bi-geo-alt-fill"></i> {{show.venue}}
+        </p>
+        <p class="event-date">
+          <i class="bi bi-calendar3"></i> {{show.date | date:'mediumDate'}}
+        </p>
+        <p class="event-price">₹{{show.price}}</p>
+        <a [routerLink]="['/shows', show.id]" class="btn btn-book" (click)="checkLoginBeforeNavigate($event, '/shows/' + show.id)">
+          Book
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premieres Section -->
+<div class="premieres-section mb-5">
+  <div class="container">
+    <div class="premieres-header">
+      <div>
+        <h2 class="section-title">Premieres</h2>
+        <p class="premieres-subtitle">Brand new releases every Friday</p>
+      </div>
+      <a routerLink="/shows" class="view-all" (click)="checkLoginBeforeNavigate($event, '/shows')">
+        See All <i class="bi bi-chevron-right"></i>
+      </a>
+    </div>
+    
+    <div class="premieres-slider">
+      <div class="premiere-card" *ngFor="let show of featuredShows.slice(0, 4)">
+        <div class="premiere-poster">
+          <img [src]="sanitizeImageUrl(show.image || show.posterUrl || show.imageUrl) || 'assets/images/placeholder.png'" alt="{{show.title}}" onerror="this.src='assets/images/placeholder.png'; this.onerror=null;">
+        </div>
+        <div class="premiere-details">
+          <h3 class="premiere-title">{{show.title}}</h3>
+          <p class="premiere-language">English</p>
+          <a [routerLink]="['/shows', show.id]" class="btn btn-book" (click)="checkLoginBeforeNavigate($event, '/shows/' + show.id)">
+            Book
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events Section -->
+<div class="container mb-5">
+  <div class="section-header">
+    <h2 class="section-title">Events You Might Like</h2>
+    <a routerLink="/shows" [queryParams]="{type: 'Event'}" class="view-all" (click)="checkLoginBeforeNavigate($event, '/shows?type=Event')">
+      See All <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+  
+  <div class="live-events-grid">
+    <div class="live-event-card" *ngFor="let show of upcomingEvents">
+      <div class="live-event-image">
+        <img [src]="sanitizeImageUrl(show.image || show.posterUrl || show.imageUrl) || 'assets/images/placeholder.png'" alt="{{show.title}}" onerror="this.src='assets/images/placeholder.png'; this.onerror=null;">
+        <span class="live-badge">EVENT</span>
+      </div>
+      <div class="live-event-details">
+        <h3 class="live-event-title">{{show.title}}</h3>
+        <p class="live-event-info">
+          <span><i class="bi bi-calendar3"></i> {{show.date | date:'mediumDate'}}</span>
+          <span><i class="bi bi-geo-alt-fill"></i> {{show.venue}}</span>
+        </p>
+        <div class="live-event-type">{{show.type}}</div>
+        <a [routerLink]="['/shows', show.id]" class="btn btn-book-event" (click)="checkLoginBeforeNavigate($event, '/shows/' + show.id)">
+          Book Now
+        </a>
+      </div>
+    </div>
+    
+    <!-- Show a message if no events are available -->
+    <div *ngIf="upcomingEvents.length === 0" class="no-events-message">
+      <i class="bi bi-calendar-x"></i>
+      <p>No upcoming events available at the moment.</p>
+    </div>
+  </div>
+</div>
+
+<!-- App Download Section -->
+<div class="app-download-section mb-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h2 class="app-title">Enjoy ShowVault on the Go!</h2>
+        <p class="app-description">Download our mobile app for a seamless booking experience</p>
+        <div class="app-buttons">
+          <a href="#" class="app-button">
+            <i class="bi bi-apple"></i> App Store
+          </a>
+          <a href="#" class="app-button">
+            <i class="bi bi-google-play"></i> Google Play
+          </a>
+        </div>
+      </div>
+      <div class="col-md-6 text-center">
+        <img src="assets/images/app-mockup.png" alt="ShowVault App" class="app-image" onerror="this.src='assets/images/placeholder.png'">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Login/Register Buttons for Mobile -->
+<div class="auth-buttons-mobile" *ngIf="!isLoggedIn">
+  <a routerLink="/login" class="btn btn-login">Login</a>
+  <a routerLink="/register" class="btn btn-register">Register</a>
+</div>
+
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginRequiredModalLabel">Login Required</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Please login to access this feature.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a routerLink="/login" class="btn btn-primary">Login</a>
+      </div>
+    </div>
+  </div>
+</div>

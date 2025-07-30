@@ -1,0 +1,18 @@
+<div class="admin-layout">
+  <!-- Admin Header -->
+  <app-admin-header (toggleSidebarEvent)="toggleSidebar()"></app-admin-header>
+  
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" [class.collapsed]="isSidebarCollapsed">
+      <app-admin-sidebar></app-admin-sidebar>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-content">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>
